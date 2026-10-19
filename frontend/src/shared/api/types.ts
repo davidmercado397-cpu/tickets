@@ -302,6 +302,17 @@ export interface Client {
   sites: Site[];
 }
 
+export interface ClientImportResult {
+  dry_run: boolean;
+  saved: boolean;
+  clients_created: number;
+  clients_updated: number;
+  sites_created: number;
+  sites_updated: number;
+  quotas_set: number;
+  errors: { sheet: string; row: number; message: string }[];
+}
+
 export interface Employee {
   id: UUID;
   document_type: string;

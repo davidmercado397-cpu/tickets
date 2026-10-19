@@ -97,3 +97,20 @@ class PublicClientLookup(BaseModel):
     id: uuid.UUID
     name: str
     sites: list[PublicSite]
+
+
+class ImportRowError(BaseModel):
+    sheet: str
+    row: int
+    message: str
+
+
+class ImportResult(BaseModel):
+    dry_run: bool
+    saved: bool
+    clients_created: int
+    clients_updated: int
+    sites_created: int
+    sites_updated: int
+    quotas_set: int
+    errors: list[ImportRowError]

@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.visits.models import Visit
-from app.modules.visits.service import compliance, month_range  # noqa: F401
+from app.modules.visits.service import compliance, month_range, set_quota_count  # noqa: F401
 
 
 async def report_rows(session: AsyncSession, tenant_id: uuid.UUID, month: str | None = None) -> list[dict]:

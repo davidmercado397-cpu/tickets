@@ -92,6 +92,34 @@ async def upsert_quota(session: AsyncSession, ctx: Ctx, data: dict) -> VisitQuot
     return quota
 
 
+async def set_quota_count(
+    session: AsyncSession,
+    tenant_id: uuid.UUID,
+    *,
+    visits_per_month: int,
+    client_id: uuid.UUID | None = None,
+    site_id: uuid.UUID | None = None,
+) -> bool:
+    """Fija la meta mensual de un cliente (todas sus sedes) o de una sede, sin hacer commit (importaciones).
+
+    Conserva el formulario sugerido de una meta existente. Devuelve True si hubo cambio."""
+    stmt = select(VisitQuota).where(VisitQuota.tenant_id == tenant_id)
+    stmt = stmt.where(VisitQuota.site_id == site_id) if site_id else stmt.where(
+        VisitQuota.client_id == client_id, VisitQuota.site_id.is_(None))
+    quota = (await session.execute(stmt)).scalar_one_or_none()
+    if quota is None:
+        if visits_per_month == 0:
+            return False
+        session.add(VisitQuota(tenant_id=tenant_id, client_id=None if site_id else client_id, site_id=site_id,
+                               visits_per_month=visits_per_month, active=True))
+        await session.flush()
+        return True
+    changed = quota.visits_per_month != visits_per_month or not quota.active
+    quota.visits_per_month, quota.active = visits_per_month, True
+    await session.flush()
+    return changed
+
+
 async def delete_quota(session: AsyncSession, ctx: Ctx, quota_id: uuid.UUID) -> None:
     q = await session.get(VisitQuota, quota_id)
     if q is None or q.tenant_id != ctx.tid:

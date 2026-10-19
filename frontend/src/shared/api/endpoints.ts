@@ -97,6 +97,13 @@ export const clientsApi = {
     http<T.Site>(`/clients/${clientId}/sites`, { method: 'POST', body }),
   updateSite: (id: string, body: Record<string, unknown>) => http<T.Site>(`/sites/${id}`, { method: 'PATCH', body }),
   sites: (clientId?: string, q?: string) => http<T.Site[]>('/sites', { query: { client_id: clientId, q } }),
+  importTemplate: () => openFile('/clients/import-template', 'plantilla_clientes_puestos.xlsx'),
+  importExcel: (file: File, dryRun: boolean) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('dry_run', String(dryRun));
+    return http<T.ClientImportResult>('/clients/import', { method: 'POST', body: fd });
+  },
 };
 
 export const employeesApi = {

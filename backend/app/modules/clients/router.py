@@ -3,16 +3,17 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, File, Form, Request, Response, UploadFile, status
 
 from app.core.context import Ctx
-from app.core.errors import NotFoundError
+from app.core.errors import NotFoundError, ValidationError
 from app.core.ratelimit import enforce_rate_limit
-from app.modules.clients import service
+from app.modules.clients import importer, service
 from app.modules.clients.schemas import (
     ClientIn,
     ClientOut,
     ClientUpdate,
+    ImportResult,
     PublicClientLookup,
     PublicSite,
     SiteIn,
@@ -31,6 +32,27 @@ ManageClients = Annotated[Ctx, Depends(require("clients.manage"))]
 @router.get("/clients", response_model=list[ClientOut])
 async def list_clients(ctx: ViewClients, session: SessionDep, q: str | None = None, active: bool | None = None) -> list[ClientOut]:
     return [ClientOut.model_validate(c) for c in await service.list_clients(session, ctx, q, active)]
+
+
+@router.get("/clients/import-template")
+async def import_template(_: ManageClients) -> Response:
+    """Plantilla Excel: hojas Clientes, Puestos (con meta de visitas) e Instrucciones."""
+    return Response(
+        importer.build_template(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="plantilla_clientes_puestos.xlsx"'},
+    )
+
+
+@router.post("/clients/import", response_model=ImportResult)
+async def import_clients(
+    ctx: ManageClients, session: SessionDep, file: UploadFile = File(...), dry_run: bool = Form(True)
+) -> ImportResult:
+    """Importa clientes, puestos y metas de visitas. `dry_run=true` solo valida (no guarda nada)."""
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise ValidationError("El archivo supera 10 MB.")
+    return ImportResult(**await importer.import_workbook(session, ctx, data, dry_run=dry_run))
 
 
 @router.post("/clients", response_model=ClientOut, status_code=status.HTTP_201_CREATED)

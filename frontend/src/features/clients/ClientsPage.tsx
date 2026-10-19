@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Loader2, Plus, Search } from 'lucide-react';
+import { FileSpreadsheet, Loader2, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +20,8 @@ import { ResponsiveList } from '@/shared/ui/responsive-list';
 import { toast } from '@/shared/ui/sonner';
 import { EmptyState } from '@/shared/ui/states/EmptyState';
 import { Textarea } from '@/shared/ui/textarea';
+
+import { ImportClientsDialog } from './ImportClientsDialog';
 
 type ClientForm = Partial<Omit<Client, 'sites' | 'id'>>;
 
@@ -104,6 +106,7 @@ export function ClientsPage() {
   const dq = useDebouncedValue(q, 300);
   const list = useClients(dq || undefined);
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const columns: ColumnDef<Client, unknown>[] = [
     {
@@ -127,12 +130,19 @@ export function ClientsPage() {
         title="Clientes y sedes"
         description="Clientes corporativos y sus puestos de servicio."
         actions={can('clients.manage') && (
-          <Button onClick={() => setOpen(true)}>
-            <Plus />
-            Nuevo cliente
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileSpreadsheet />
+              Importar Excel
+            </Button>
+            <Button onClick={() => setOpen(true)}>
+              <Plus />
+              Nuevo cliente
+            </Button>
+          </div>
         )}
       />
+      <ImportClientsDialog open={importOpen} onOpenChange={setImportOpen} />
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre o NIT" className="pl-9" />
