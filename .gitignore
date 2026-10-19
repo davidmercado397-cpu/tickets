@@ -1,0 +1,21 @@
+# Entorno / secretos
+.env
+*.env.local
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.coverage
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+# Datos locales de Docker
+.data/
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

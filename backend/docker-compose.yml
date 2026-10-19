@@ -1,0 +1,49 @@
+# Stack local: el Ticketing + PostgreSQL + Redis (bus SSE de notificaciones). En Coolify se replica
+# (Postgres y Redis como recursos aparte).
+services:
+  app:
+    build: .
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    environment:
+      # En local apuntamos a los servicios de este compose (sobrescriben lo que haya en .env).
+      DATABASE_URL: postgresql+asyncpg://tickets:tickets@postgres:5432/tickets
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: tickets
+      POSTGRES_PASSWORD: tickets
+      POSTGRES_DB: tickets
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tickets"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:

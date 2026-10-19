@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.vitest
+.git
+.gitignore
+*.local
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+docker-compose.yml
+npm-debug.log*
+pnpm-debug.log*
