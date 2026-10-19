@@ -1,7 +1,4 @@
-"""Entorno de Alembic (async).
-
-La URL de BD se lee de Settings (entorno), no de alembic.ini. Importa el `Base` con TODOS los modelos
-para que `target_metadata` incluya todas las tablas."""
+"""Entorno de Alembic (async). Carga TODOS los módulos para que `Base.metadata` tenga todas las tablas."""
 
 from __future__ import annotations
 
@@ -11,8 +8,11 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.adapters.db_models import Base
-from app.config import get_settings
+from app.core.config import get_settings
+from app.core.db import Base
+from app.modules import load_modules
+
+load_modules()
 
 config = context.config
 if config.config_file_name is not None:
@@ -29,13 +29,8 @@ def _url() -> str:
 
 
 def run_migrations_offline() -> None:
-    context.configure(
-        url=_url(),
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-    )
+    context.configure(url=_url(), target_metadata=target_metadata, literal_binds=True,
+                      dialect_opts={"paramstyle": "named"}, compare_type=True)
     with context.begin_transaction():
         context.run_migrations()
 

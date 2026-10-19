@@ -1,4 +1,3 @@
-# Dependencias SOLO de desarrollo/test (no se instalan en la imagen de producción).
 -r requirements.txt
 pytest==9.1.1
 pytest-asyncio==1.4.0

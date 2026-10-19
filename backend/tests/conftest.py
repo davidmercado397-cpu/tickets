@@ -1,100 +1,80 @@
-"""Fixtures comunes de los tests.
-
-Los tests corren sobre SQLite async (aiosqlite): NO necesitan PostgreSQL ni Redis reales. El lifespan
-de la app crea el esquema con create_all sobre el SQLite de archivo."""
+"""Fixtures: SQLite de archivo + fakeredis + almacenamiento en memoria. No requieren servicios reales."""
 
 from __future__ import annotations
+
+import json
 
 import fakeredis.aioredis
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-
-# Token de servicio determinista para los tests (auth del bot).
-SERVICE_TOKEN = "test-service-token"
-AUTH = {"Authorization": f"Bearer {SERVICE_TOKEN}"}
-# Admin sembrado en el arranque (bootstrap sin endpoint operador).
-SEED_ADMIN_EMAIL = "seed-admin@test.co"
-SEED_ADMIN_PASSWORD = "seed-admin-123"
+SUPER = ("super@plataforma.co", "super-secreto-123")
+ADMIN = ("admin@servigpoder.co", "admin-secreto-123")
 
 
 @pytest.fixture
-def app_env(monkeypatch, tmp_path):
-    """Configura el entorno mínimo para arrancar la app con SQLite de archivo."""
-    from app.config import get_settings
+def client(monkeypatch, tmp_path):
+    from app.core.config import get_settings
 
-    monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{tmp_path}/app.db")
-    monkeypatch.setenv("TICKETING_SERVICE_TOKEN", SERVICE_TOKEN)
-    monkeypatch.setenv("RADICADO_PREFIX", "SRV")
-    monkeypatch.setenv("API_PREFIX", "/api")
-    monkeypatch.setenv("LOG_FORMAT", "text")
-    monkeypatch.setenv("AUTH_JWT_SIGNING_KEY", "test-jwt-signing-key-0123456789-abcdefghij")
-    monkeypatch.setenv("SEED_ADMIN_EMAIL", SEED_ADMIN_EMAIL)
-    monkeypatch.setenv("SEED_ADMIN_PASSWORD", SEED_ADMIN_PASSWORD)
-    # Redis del bus SSE → fakeredis (sin Redis real en los tests).
-    monkeypatch.setattr(
-        "redis.asyncio.from_url",
-        lambda *a, **k: fakeredis.aioredis.FakeRedis(decode_responses=True),
-    )
+    env = {
+        "DATABASE_URL": f"sqlite+aiosqlite:///{tmp_path}/app.db",
+        "AUTH_JWT_SIGNING_KEY": "test-jwt-signing-key-0123456789-abcdefghij",
+        "SEED_SUPERADMIN_EMAIL": SUPER[0],
+        "SEED_SUPERADMIN_PASSWORD": SUPER[1],
+        "SEED_DEMO_TENANT": "true",
+        "SEED_DEMO_ADMIN_EMAIL": ADMIN[0],
+        "SEED_DEMO_ADMIN_PASSWORD": ADMIN[1],
+        "LOG_FORMAT": "text",
+        "S3_ENDPOINT_URL": "",
+        "SMTP_HOST": "",
+        "SECRETS_ENCRYPTION_KEY": "Zm9vYmFyYmF6cXV4cXV1eGZvb2JhcmJhenF1eHF1dXg=",
+    }
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    fake = fakeredis.aioredis.FakeRedis(decode_responses=True)
+    monkeypatch.setattr("redis.asyncio.from_url", lambda *a, **k: fake)
     get_settings.cache_clear()
-    yield
-    get_settings.cache_clear()
+    from app.main import app
 
-
-@pytest.fixture
-def client(app_env):
-    """TestClient con el lifespan real (crea el esquema SQLite + siembra el admin al entrar)."""
     with TestClient(app) as c:
+        c.fake_redis = fake  # type: ignore[attr-defined]
         yield c
+    get_settings.cache_clear()
 
 
-def bearer(token: str) -> dict:
-    return {"Authorization": f"Bearer {token}"}
-
-
-def admin_token(client: TestClient) -> str:
-    """Login como el admin sembrado; devuelve su JWT."""
-    r = client.post(
-        "/api/auth/login", json={"email": SEED_ADMIN_EMAIL, "password": SEED_ADMIN_PASSWORD}
-    )
+def login(client: TestClient, email: str, password: str) -> dict:
+    r = client.post("/api/auth/login", json={"email": email, "password": password})
     assert r.status_code == 200, r.text
-    return r.json()["access_token"]
+    return {"Authorization": f"Bearer {r.json()['access_token']}"}
 
 
-def create_user(
-    client: TestClient,
-    token: str,
-    email: str,
-    password: str = "secret-123",
-    role: str = "agent",
-    area_codes: list[str] | None = None,
-    phone: str | None = None,
-) -> dict:
-    """Crea un usuario vía /api/users (requiere un token de admin)."""
-    body: dict = {"email": email, "password": password, "role": role}
-    if area_codes is not None:
-        body["area_codes"] = area_codes
-    if phone is not None:
-        body["phone"] = phone
-    r = client.post("/api/users", headers=bearer(token), json=body)
+@pytest.fixture
+def admin(client) -> dict:
+    return login(client, *ADMIN)
+
+
+@pytest.fixture
+def superadmin(client) -> dict:
+    return login(client, *SUPER)
+
+
+def catalog_ids(client: TestClient, headers: dict, segment: str = "external") -> tuple[str, str, str]:
+    types = client.get("/api/catalog/request-types", headers=headers).json()
+    queja = next(t for t in types if t["code"] == "queja")["id"]
+    cats = client.get(f"/api/catalog/categories?segment={segment}", headers=headers).json()
+    cat = next(c for c in cats if c["request_type_id"] is None)
+    return queja, cat["id"], cat["subcategories"][0]["id"]
+
+
+def make_client_site(client: TestClient, headers: dict, nit: str = "900.123.456-7") -> tuple[dict, dict]:
+    r = client.post("/api/clients", headers=headers, json={"nit": nit, "name": "Conjunto Los Robles",
+                                                           "contact_email": "admin@robles.co"})
     assert r.status_code == 201, r.text
-    return r.json()
-
-
-def create_area(client: TestClient, name: str, code: str | None = None) -> dict:
-    body: dict = {"name": name}
-    if code is not None:
-        body["code"] = code
-    r = client.post("/api/areas", headers=AUTH, json=body)
+    c = r.json()
+    r = client.post(f"/api/clients/{c['id']}/sites", headers=headers, json={"name": "Portería principal"})
     assert r.status_code == 201, r.text
-    return r.json()
+    return c, r.json()
 
 
-def create_category(client: TestClient, name: str, area_code: str, code: str | None = None) -> dict:
-    body: dict = {"name": name, "area": area_code}
-    if code is not None:
-        body["code"] = code
-    r = client.post("/api/categories", headers=AUTH, json=body)
-    assert r.status_code == 201, r.text
-    return r.json()
+def public_create(client: TestClient, payload: dict, files=None):
+    return client.post("/api/public/tenants/servigpoder/pqrs", data={"data": json.dumps(payload)}, files=files)
