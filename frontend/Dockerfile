@@ -19,7 +19,7 @@ RUN pnpm run build
 FROM nginx:1.27-alpine AS runtime
 
 # Origen del backend Ticketing (SIN slash final). Sobrescribible en despliegue.
-ENV API_BACKEND=http://host.docker.internal:8001
+ENV API_BACKEND=http://api:8000
 
 # La plantilla se resuelve con envsubst (solo ${API_BACKEND}) al arrancar el contenedor.
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template

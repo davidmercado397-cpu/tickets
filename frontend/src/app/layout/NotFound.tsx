@@ -8,7 +8,7 @@ export function NotFound() {
       <p className="text-4xl font-semibold">404</p>
       <p className="text-muted-foreground">Página no encontrada.</p>
       <Button asChild variant="outline">
-        <Link to="/tickets">Volver</Link>
+        <Link to="/">Ir al inicio</Link>
       </Button>
     </div>
   );

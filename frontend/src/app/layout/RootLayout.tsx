@@ -1,13 +1,12 @@
 import { Menu, PanelLeft, PanelLeftClose, Search } from 'lucide-react';
 import { Suspense, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router-dom';
 
 import { Breadcrumbs } from '@/app/layout/Breadcrumbs';
 import { CommandPalette } from '@/app/layout/CommandPalette';
 import { Sidebar } from '@/app/layout/Sidebar';
 import { TopProgress } from '@/app/layout/TopProgress';
-import { NotificationsBell } from '@/features/notifications/ui/NotificationsBell';
+import { NotificationsBell } from '@/features/notifications/NotificationsBell';
 import { useUiStore } from '@/shared/config/ui.store';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -15,7 +14,6 @@ import { Sheet, SheetContent } from '@/shared/ui/sheet';
 import { LoadingState } from '@/shared/ui/states/LoadingState';
 
 export function RootLayout() {
-  const { t } = useTranslation(['nav']);
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const setCommandOpen = useUiStore((s) => s.setCommandOpen);
@@ -55,7 +53,7 @@ export function RootLayout() {
             size="icon"
             className="lg:hidden"
             onClick={() => setMobileOpen(true)}
-            aria-label={t('nav:menu')}
+            aria-label="Abrir menú"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -64,7 +62,7 @@ export function RootLayout() {
             size="icon"
             className="hidden lg:inline-flex"
             onClick={toggleSidebar}
-            aria-label={collapsed ? t('nav:expand') : t('nav:collapse')}
+            aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
           >
             {collapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           </Button>
@@ -79,16 +77,16 @@ export function RootLayout() {
               className="hidden items-center gap-2 rounded-lg border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted sm:flex"
             >
               <Search className="h-4 w-4" />
-              <span>{t('nav:search')}</span>
+              <span>Buscar</span>
               <kbd className="ml-1 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium">
-                ⌘K
+                Ctrl K
               </kbd>
             </button>
             <NotificationsBell />
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 px-3 py-4 sm:p-6">
           <div className="mx-auto w-full max-w-7xl">
             {/* Fallback mientras carga el chunk de la página (code-splitting por ruta). */}
             <Suspense fallback={<LoadingState />}>

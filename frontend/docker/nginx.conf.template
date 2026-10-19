@@ -7,6 +7,9 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Adjuntos de PQRS, fotos de visitas y evidencias (la API valida el límite real: MAX_UPLOAD_MB).
+    client_max_body_size 25m;
+
     gzip on;
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1024;

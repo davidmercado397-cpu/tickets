@@ -42,6 +42,13 @@
     --sidebar-muted: 215 20% 65%;
     --sidebar-accent: 243 75% 59%;
     --sidebar-border: 217 33% 20%;
+
+    /* Gráficos (paleta de referencia validada para daltonismo) */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --chart-grid: #e1e0d9;
+    --chart-axis: #898781;
   }
 
   .dark {
@@ -79,6 +86,12 @@
     --sidebar-muted: 215 20% 60%;
     --sidebar-accent: 243 75% 68%;
     --sidebar-border: 217 33% 16%;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #898781;
   }
 }
 

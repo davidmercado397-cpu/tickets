@@ -3,9 +3,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-// El backend Ticketing (app_tickets) corre en :8001. En dev el proxy manda /api
-// al backend real (mismo origen → sin CORS). Con VITE_API_MODE=mock, MSW intercepta
-// y el proxy queda inerte.
+// En dev el proxy manda /api al backend (docker compose expone :8000)
+// (mismo origen → sin CORS).
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -18,7 +18,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: process.env.VITE_PROXY_TARGET ?? 'http://localhost:8000',
         changeOrigin: true,
       },
     },

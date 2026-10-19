@@ -1,31 +1,31 @@
+import { Suspense } from 'react';
 import { RouterProvider } from 'react-router-dom';
 
 import { router } from '@/app/router';
 import { Toaster } from '@/shared/ui/sonner';
+import { LoadingState } from '@/shared/ui/states/LoadingState';
 import { TooltipProvider } from '@/shared/ui/tooltip';
 
 import { AuthProvider } from './AuthProvider';
-import { I18nProvider } from './I18nProvider';
 import { NotificationsProvider } from './NotificationsProvider';
 import { QueryProvider } from './QueryProvider';
 import { ThemeProvider } from './ThemeProvider';
 
-/** Composición de providers en el orden correcto + el router de la app. */
 export function AppProviders() {
   return (
     <QueryProvider>
-      <I18nProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <NotificationsProvider>
-              <TooltipProvider delayDuration={200}>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <TooltipProvider delayDuration={200}>
+              <Suspense fallback={<div className="p-6"><LoadingState rows={4} /></div>}>
                 <RouterProvider router={router} />
-                <Toaster />
-              </TooltipProvider>
-            </NotificationsProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </I18nProvider>
+              </Suspense>
+              <Toaster />
+            </TooltipProvider>
+          </NotificationsProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryProvider>
   );
 }

@@ -1,95 +1,70 @@
-import { Headset } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 
-import { NAV_SECTIONS, type NavItem } from '@/app/layout/nav';
+import { BrandMark } from '@/app/layout/BrandMark';
+import type { NavItem } from '@/app/layout/nav';
+import { useNavSections } from '@/app/layout/useNav';
 import { UserMenu } from '@/app/layout/UserMenu';
-import { useSessionUser } from '@/features/auth/hooks/useSession';
-import { can } from '@/shared/config/permissions';
 import { cn } from '@/shared/lib/cn';
+import { useSessionUser } from '@/shared/session/session.store';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 
-function SideNavItem({
-  item,
-  collapsed,
-  label,
-  onNavigate,
-}: {
-  item: NavItem;
-  collapsed: boolean;
-  label: string;
-  onNavigate?: () => void;
-}) {
+function SideNavItem({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const Icon = item.icon;
   const link = (
     <NavLink
       to={item.to}
+      end={item.end}
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+          'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
           collapsed && 'justify-center px-0',
           isActive
-            ? 'bg-sidebar-accent text-white shadow-sm'
+            ? 'bg-white/10 text-white before:absolute before:inset-y-1.5 before:left-0 before:w-1 before:rounded-full before:bg-sidebar-accent'
             : 'text-sidebar-foreground/75 hover:bg-white/5 hover:text-sidebar-foreground',
         )
       }
     >
       <Icon className="h-[18px] w-[18px] shrink-0" />
-      {!collapsed && <span className="truncate">{label}</span>}
+      {!collapsed && <span className="truncate">{item.label}</span>}
     </NavLink>
   );
-
   if (!collapsed) return link;
   return (
     <Tooltip>
       <TooltipTrigger asChild>{link}</TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
+      <TooltipContent side="right">{item.label}</TooltipContent>
     </Tooltip>
   );
 }
 
-export function Sidebar({
-  collapsed,
-  onNavigate,
-}: {
-  collapsed: boolean;
-  onNavigate?: () => void;
-}) {
-  const { t } = useTranslation(['common', 'tickets', 'admin', 'nav']);
+export function Sidebar({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const sections = useNavSections();
   const user = useSessionUser();
-  const isAdmin = can(user, 'manageCatalog');
-  const sections = NAV_SECTIONS.filter((s) => !s.adminOnly || isAdmin);
+  const tenant = user?.tenant;
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div
-        className={cn('flex h-16 items-center gap-2.5 px-4', collapsed && 'justify-center px-0')}
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-white shadow-sm">
-          <Headset className="h-5 w-5" />
-        </div>
+      <div className={cn('flex h-16 items-center gap-2.5 px-4', collapsed && 'justify-center px-0')}>
+        <BrandMark slug={tenant?.slug} hasLogo={tenant?.has_logo} />
         {!collapsed && (
-          <span className="truncate text-[15px] font-semibold">{t('common:appName')}</span>
+          <div className="min-w-0">
+            <p className="truncate text-[15px] font-semibold leading-tight">{tenant?.name ?? 'Plataforma PQRS'}</p>
+            <p className="truncate text-[11px] text-sidebar-muted">Gestión de PQRS y operación</p>
+          </div>
         )}
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-2">
         {sections.map((section) => (
-          <div key={section.titleKey} className="space-y-1">
+          <div key={section.title} className="space-y-0.5">
             {!collapsed && (
               <p className="px-3 pb-1 pt-1 text-[11px] font-medium uppercase tracking-wider text-sidebar-muted">
-                {t(section.titleKey)}
+                {section.title}
               </p>
             )}
             {section.items.map((item) => (
-              <SideNavItem
-                key={item.to}
-                item={item}
-                collapsed={collapsed}
-                label={t(item.labelKey)}
-                onNavigate={onNavigate}
-              />
+              <SideNavItem key={item.to} item={item} collapsed={collapsed} onNavigate={onNavigate} />
             ))}
           </div>
         ))}

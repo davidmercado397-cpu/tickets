@@ -1,30 +1,19 @@
 import { LogOut, MoonStar } from 'lucide-react';
 import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { NAV_SECTIONS } from '@/app/layout/nav';
-import { useLogout, useSessionUser } from '@/features/auth/hooks/useSession';
-import { can } from '@/shared/config/permissions';
+import { useNavSections } from '@/app/layout/useNav';
 import { useThemeStore } from '@/shared/config/theme.store';
 import { useUiStore } from '@/shared/config/ui.store';
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/shared/ui/command';
+import { useLogout } from '@/shared/session/useMe';
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/ui/command';
 
-/** Paleta de comandos (⌘K): navegación entre secciones + acciones rápidas. */
+/** Paleta de comandos (Ctrl/⌘ + K): navegación rápida. */
 export function CommandPalette() {
-  const { t } = useTranslation(['common', 'tickets', 'admin', 'nav']);
   const navigate = useNavigate();
   const open = useUiStore((s) => s.commandOpen);
   const setOpen = useUiStore((s) => s.setCommandOpen);
-  const user = useSessionUser();
-  const isAdmin = can(user, 'manageCatalog');
+  const sections = useNavSections();
   const logout = useLogout();
   const toggleTheme = useThemeStore((s) => s.toggle);
 
@@ -44,46 +33,32 @@ export function CommandPalette() {
     navigate(to);
   };
 
-  const sections = NAV_SECTIONS.filter((s) => !s.adminOnly || isAdmin);
-
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder={t('nav:search')} />
+      <CommandInput placeholder="Buscar sección…" />
       <CommandList>
-        <CommandEmpty>{t('common:empty')}</CommandEmpty>
+        <CommandEmpty>Sin resultados</CommandEmpty>
         {sections.map((section) => (
-          <CommandGroup key={section.titleKey} heading={t(section.titleKey)}>
+          <CommandGroup key={section.title} heading={section.title}>
             {section.items.map((item) => {
               const Icon = item.icon;
               return (
-                <CommandItem key={item.to} value={t(item.labelKey)} onSelect={() => go(item.to)}>
+                <CommandItem key={item.to} value={item.label} onSelect={() => go(item.to)}>
                   <Icon />
-                  {t(item.labelKey)}
+                  {item.label}
                 </CommandItem>
               );
             })}
           </CommandGroup>
         ))}
-        <CommandGroup heading={t('common:theme')}>
-          <CommandItem
-            value="tema theme"
-            onSelect={() => {
-              setOpen(false);
-              toggleTheme();
-            }}
-          >
+        <CommandGroup heading="Preferencias">
+          <CommandItem value="tema oscuro claro" onSelect={() => { setOpen(false); toggleTheme(); }}>
             <MoonStar />
-            {t('common:theme')}
+            Cambiar tema
           </CommandItem>
-          <CommandItem
-            value="cerrar sesion logout"
-            onSelect={() => {
-              setOpen(false);
-              logout();
-            }}
-          >
+          <CommandItem value="cerrar sesion salir" onSelect={() => { setOpen(false); logout(); }}>
             <LogOut />
-            {t('common:logout')}
+            Cerrar sesión
           </CommandItem>
         </CommandGroup>
       </CommandList>

@@ -1,10 +1,10 @@
-/** Error de campo normalizado desde un 422 de FastAPI (loc → nombre de campo). */
+/** Error de campo normalizado desde un 422 (loc → nombre de campo). */
 export interface FieldError {
   field: string;
   message: string;
 }
 
-/** Error uniforme de la capa de API. Lleva el status y, si aplica, errores por campo. */
+/** Error uniforme de la API. El backend responde `{"detail": "...", "errors": [...]}`. */
 export class ApiError extends Error {
   readonly status: number;
   readonly fieldErrors: FieldError[];
@@ -16,25 +16,38 @@ export class ApiError extends Error {
     this.fieldErrors = fieldErrors;
   }
 
-  /** Construye desde el cuerpo de un 422 (HTTPValidationError de FastAPI). */
-  static fromValidation(body: unknown): ApiError {
+  static fromResponse(status: number, body: unknown): ApiError {
+    const b = body as { detail?: unknown; errors?: unknown } | null;
     const fields: FieldError[] = [];
-    const detail = (body as { detail?: unknown } | null)?.detail;
-    if (Array.isArray(detail)) {
-      for (const item of detail) {
-        const loc = (item as { loc?: unknown }).loc;
-        const msg = (item as { msg?: unknown }).msg;
-        if (Array.isArray(loc) && loc.length > 0) {
-          // loc suele ser ["body", "campo"]; tomamos el último segmento como campo.
-          const field = String(loc[loc.length - 1]);
-          fields.push({ field, message: typeof msg === 'string' ? msg : 'Valor inválido' });
-        }
+    const list = Array.isArray(b?.errors) ? b?.errors : Array.isArray(b?.detail) ? b?.detail : [];
+    for (const item of list as { loc?: unknown[]; msg?: string }[]) {
+      if (Array.isArray(item.loc) && item.loc.length > 0) {
+        fields.push({
+          field: String(item.loc[item.loc.length - 1]),
+          message: String(item.msg ?? 'Valor inválido').replace(/^Value error, /, ''),
+        });
       }
     }
-    return new ApiError(422, 'Datos inválidos', fields);
+    const message =
+      typeof b?.detail === 'string'
+        ? b.detail
+        : status === 403
+          ? 'No tienes permiso para esta acción.'
+          : status === 404
+            ? 'No encontrado.'
+            : status >= 500
+              ? 'Error del servidor. Intenta de nuevo.'
+              : 'Solicitud inválida.';
+    return new ApiError(status, message, fields);
   }
 }
 
 export function isUnauthorized(err: unknown): boolean {
   return err instanceof ApiError && err.status === 401;
+}
+
+export function errorMessage(err: unknown): string {
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof Error) return err.message;
+  return 'Ocurrió un error inesperado.';
 }
