@@ -58,9 +58,11 @@ def superadmin(client) -> dict:
     return login(client, *SUPER)
 
 
-def catalog_ids(client: TestClient, headers: dict, segment: str = "external") -> tuple[str, str, str]:
+def catalog_ids(
+    client: TestClient, headers: dict, segment: str = "external", type_code: str = "reclamo"
+) -> tuple[str, str, str]:
     types = client.get("/api/catalog/request-types", headers=headers).json()
-    queja = next(t for t in types if t["code"] == "queja")["id"]
+    queja = next(t for t in types if t["code"] == type_code)["id"]
     cats = client.get(f"/api/catalog/categories?segment={segment}", headers=headers).json()
     cat = next(c for c in cats if c["request_type_id"] is None)
     return queja, cat["id"], cat["subcategories"][0]["id"]

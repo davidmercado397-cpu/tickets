@@ -32,8 +32,18 @@ SYSTEM_ROLES: list[dict] = [
         "name": "Gestor de área",
         "description": "Atiende las PQRS de sus áreas y proyecta respuestas.",
         "permissions": [
-            "pqrs.view_area", "pqrs.manage", "pqrs.respond", "pqrs.create",
+            "pqrs.view_area", "pqrs.manage", "pqrs.respond", "pqrs.create", "pqrs.rca_contribute",
             "clients.view", "employees.view", "tasks.manage",
+        ],
+    },
+    {
+        "code": "calidad",
+        "name": "Calidad",
+        "description": "Recibe las quejas de clientes externos y lidera el análisis de causa raíz y el plan de acción.",
+        "permissions": [
+            "pqrs.view_all", "pqrs.classify", "pqrs.assign", "pqrs.manage", "pqrs.respond", "pqrs.rca_manage",
+            "pqrs.rca_contribute", "clients.view", "employees.view", "tasks.manage", "tasks.view_all",
+            "reports.view", "reports.export",
         ],
     },
     {

@@ -45,7 +45,7 @@ public_router = APIRouter(prefix="/public/tenants", tags=["portal público"])
 integration_router = APIRouter(prefix="/integrations", tags=["integraciones"])
 
 ViewCtx = Annotated[Ctx, Depends(require("pqrs.view_all", "pqrs.view_area", "pqrs.manage", "pqrs.respond",
-                                          "pqrs.approve", "pqrs.create"))]
+                                          "pqrs.approve", "pqrs.create", "pqrs.rca_manage", "pqrs.rca_contribute"))]
 CreateCtx = Annotated[Ctx, Depends(require("pqrs.create"))]
 ClassifyCtx = Annotated[Ctx, Depends(require("pqrs.classify"))]
 AssignCtx = Annotated[Ctx, Depends(require("pqrs.assign"))]
@@ -85,6 +85,7 @@ async def list_pqrs(
     mine: bool = False,
     open_only: bool = False,
     sla_state: SlaState | None = None,
+    rca_pending: bool = False,
     date_from: datetime | None = Query(None, alias="from"),
     date_to: datetime | None = Query(None, alias="to"),
     page: int = Query(1, ge=1),
@@ -93,7 +94,7 @@ async def list_pqrs(
     filters = service.ListFilters(
         q=q, status=status_, segment=segment, request_type_id=request_type_id, category_id=category_id,
         area_id=area_id, priority=priority, channel=channel, client_id=client_id, site_id=site_id,
-        assignee_id=assignee_id, mine=mine, open_only=open_only, sla_state=sla_state,
+        assignee_id=assignee_id, mine=mine, open_only=open_only, sla_state=sla_state, rca_pending=rca_pending,
         date_from=date_from, date_to=date_to,
     )
     items, total = await service.list_pqrs(session, ctx, filters, page, page_size)

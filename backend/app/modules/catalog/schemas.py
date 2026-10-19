@@ -21,6 +21,7 @@ class RequestTypeOut(ORM):
     description: str | None
     active: bool
     sort_order: int
+    rca_segments: list[Segment]
 
 
 class RequestTypeIn(BaseModel):
@@ -28,6 +29,7 @@ class RequestTypeIn(BaseModel):
     code: str | None = Field(default=None, pattern=CODE)
     description: str | None = None
     sort_order: int = 0
+    rca_segments: list[Segment] = Field(default_factory=list)
 
 
 class RequestTypeUpdate(BaseModel):
@@ -35,6 +37,7 @@ class RequestTypeUpdate(BaseModel):
     description: str | None = None
     active: bool | None = None
     sort_order: int | None = None
+    rca_segments: list[Segment] | None = None
 
 
 class SubcategoryOut(ORM):

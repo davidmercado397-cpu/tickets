@@ -16,8 +16,8 @@ from app.modules.identity.public import area_brief, area_id_by_code
 
 async def seed(session: AsyncSession, tenant_id: uuid.UUID) -> None:
     types: dict[str, uuid.UUID] = {}
-    for i, (code, name, desc) in enumerate(REQUEST_TYPES):
-        rt = RequestType(tenant_id=tenant_id, code=code, name=name, description=desc, sort_order=i)
+    for i, (code, name, desc, rca) in enumerate(REQUEST_TYPES):
+        rt = RequestType(tenant_id=tenant_id, code=code, name=name, description=desc, sort_order=i, rca_segments=rca)
         session.add(rt)
         await session.flush()
         types[code] = rt.id
@@ -60,7 +60,7 @@ async def create_type(session: AsyncSession, ctx: Ctx, data: dict) -> RequestTyp
     )).first():
         raise ConflictError(f"Ya existe un tipo con código '{code}'.")
     rt = RequestType(tenant_id=ctx.tid, code=code, name=data["name"], description=data.get("description"),
-                     sort_order=data.get("sort_order", 0))
+                     sort_order=data.get("sort_order", 0), rca_segments=data.get("rca_segments") or [])
     session.add(rt)
     await session.commit()
     return rt

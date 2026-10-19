@@ -20,6 +20,7 @@ from app.modules.tenancy.schemas import (
     LetterSettings,
     NotificationSettings,
     PortalSettings,
+    QualitySettings,
     TenantOut,
 )
 
@@ -27,6 +28,7 @@ SETTINGS_SECTIONS = {
     "portal": PortalSettings,
     "letter": LetterSettings,
     "notifications": NotificationSettings,
+    "quality": QualitySettings,
 }
 
 
@@ -37,6 +39,7 @@ def tenant_out(t: Tenant) -> TenantOut:
     out.portal = PortalSettings(**s.get("portal", {}))
     out.letter = LetterSettings(**s.get("letter", {}))
     out.notifications = NotificationSettings(**s.get("notifications", {}))
+    out.quality = QualitySettings(**s.get("quality", {}))
     inbound = dict(s.get("email_inbound", {}))
     inbound["has_password"] = bool(inbound.pop("password_enc", None))
     out.email_inbound = EmailInboundSettings(**inbound)

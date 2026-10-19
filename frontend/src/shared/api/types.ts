@@ -165,6 +165,7 @@ export interface Tenant {
   portal: PortalSettings;
   letter: LetterSettings;
   notifications: NotificationSettings;
+  quality: { area_id: UUID | null };
   email_inbound: EmailInboundSettings;
 }
 
@@ -203,6 +204,7 @@ export interface RequestType {
   description: string | null;
   active: boolean;
   sort_order: number;
+  rca_segments: Segment[];
 }
 
 export interface Subcategory {
@@ -344,6 +346,8 @@ export interface PqrsSummary {
   created_at: string;
   sla_due_at: string | null;
   sla_state: SlaState | null;
+  requires_rca: boolean;
+  rca_status: RcaStatus | null;
 }
 
 export interface PqrsEvent {
@@ -427,6 +431,41 @@ export interface PublicStatus {
   response_sent_at: string | null;
   can_reply: boolean;
   attachments: Attachment[];
+}
+
+// --- Análisis de causa raíz ---
+
+export type RcaStatus = 'setup' | 'analysis' | 'validation' | 'plan' | 'closed';
+export type RcaMethod = 'five_whys' | 'ishikawa' | 'free';
+export type CauseCategory = 'people' | 'method' | 'materials' | 'machine' | 'measurement' | 'environment';
+
+export interface RcaParticipant {
+  area: Named;
+  analysis: string | null;
+  whys: string[];
+  contributed_by: string | null;
+  contributed_at: string | null;
+  can_contribute: boolean;
+}
+
+export interface Rca {
+  status: RcaStatus;
+  method: RcaMethod;
+  problem_statement: string | null;
+  root_cause: string | null;
+  cause_category: CauseCategory | null;
+  consolidated_at: string | null;
+  consolidated_by: string | null;
+  plan_required: boolean | null;
+  validation_note: string | null;
+  validated_at: string | null;
+  validated_by: string | null;
+  plan_summary: string | null;
+  closed_at: string | null;
+  closed_by: string | null;
+  participants: RcaParticipant[];
+  actions: { id: UUID; title: string; status: TaskStatus; due_date: string | null; assignee: string | null; overdue: boolean }[];
+  can_manage: boolean;
 }
 
 // --- Tareas ---

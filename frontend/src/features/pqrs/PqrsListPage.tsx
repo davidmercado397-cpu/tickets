@@ -18,6 +18,7 @@ import { NativeSelect } from '@/shared/ui/field';
 import { Input } from '@/shared/ui/input';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Pagination } from '@/shared/ui/pagination';
+import { Pill } from '@/shared/ui/pill';
 import { ResponsiveList } from '@/shared/ui/responsive-list';
 import { EmptyState } from '@/shared/ui/states/EmptyState';
 
@@ -26,6 +27,7 @@ const TABS = [
   { key: 'mine', label: 'Asignadas a mí', params: { mine: '1', open_only: '1' } },
   { key: 'approval', label: 'Por aprobar', params: { status: 'pending_approval' }, perm: 'pqrs.approve' },
   { key: 'unassigned', label: 'Sin clasificar', params: { status: 'received' }, perm: 'pqrs.classify' },
+  { key: 'rca', label: 'Causa raíz', params: { rca_pending: '1' }, perm: ['pqrs.rca_manage', 'pqrs.rca_contribute'] },
   { key: 'overdue', label: 'Vencidas', params: { sla_state: 'overdue' } },
   { key: 'all', label: 'Todas', params: {} },
 ] as const;
@@ -52,6 +54,7 @@ export function PqrsListPage() {
     if (tp.mine) f.mine = true;
     if (tp.status) f.status = [tp.status];
     if (tp.sla_state) f.sla_state = tp.sla_state as PqrsFilters['sla_state'];
+    if (tp.rca_pending) f.rca_pending = true;
     for (const k of FILTER_KEYS) {
       const v = params.get(k);
       if (!v) continue;
@@ -270,6 +273,7 @@ export function PqrsListPage() {
             <div className="flex flex-wrap items-center gap-2">
               <PriorityPill priority={r.priority} />
               <SlaPill state={r.sla_state} />
+              {r.requires_rca && r.rca_status !== 'closed' && <Pill tone="bg-warning/15 text-warning border-warning/30">Causa raíz</Pill>}
               {r.assignee && <span className="text-xs text-muted-foreground">· {r.assignee.name}</span>}
             </div>
           </div>

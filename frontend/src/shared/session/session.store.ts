@@ -72,14 +72,14 @@ export const useSessionStore = create<SessionState>((set) => ({
 export const useSessionUser = () => useSessionStore((s) => s.user);
 
 /** `can("pqrs.approve")` o `can(["pqrs.view_all", "pqrs.view_area"])` (cualquiera). */
-export function hasPermission(user: Me | null, perm: string | string[]): boolean {
+export function hasPermission(user: Me | null, perm: string | readonly string[]): boolean {
   if (!user) return false;
   if (user.is_superadmin) return true;
-  const list = Array.isArray(perm) ? perm : [perm];
+  const list: readonly string[] = typeof perm === 'string' ? [perm] : perm;
   return list.length === 0 || list.some((p) => user.permissions.includes(p));
 }
 
-export function useCan(): (perm: string | string[]) => boolean {
+export function useCan(): (perm: string | readonly string[]) => boolean {
   const user = useSessionUser();
   return (perm) => hasPermission(user, perm);
 }

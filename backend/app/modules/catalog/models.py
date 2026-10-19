@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.db import Base, IdMixin, TenantMixin, TimestampMixin
+from app.core.db import Base, IdMixin, JSONType, TenantMixin, TimestampMixin
 
 SEGMENTS = ("external", "internal")
 
@@ -21,6 +21,8 @@ class RequestType(IdMixin, TenantMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    # Segmentos (external/internal) en los que este tipo exige análisis de causa raíz (p. ej. queja externa).
+    rca_segments: Mapped[list] = mapped_column(JSONType(), default=list)
 
 
 class Category(IdMixin, TenantMixin, TimestampMixin, Base):

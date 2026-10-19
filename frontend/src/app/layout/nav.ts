@@ -34,7 +34,16 @@ export interface NavSection {
   items: NavItem[];
 }
 
-const PQRS_VIEW = ['pqrs.view_all', 'pqrs.view_area', 'pqrs.manage', 'pqrs.respond', 'pqrs.approve', 'pqrs.create'];
+const PQRS_VIEW = [
+  'pqrs.view_all',
+  'pqrs.view_area',
+  'pqrs.manage',
+  'pqrs.respond',
+  'pqrs.approve',
+  'pqrs.create',
+  'pqrs.rca_manage',
+  'pqrs.rca_contribute',
+];
 
 export const NAV_SECTIONS: NavSection[] = [
   {

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
@@ -208,6 +208,8 @@ class PqrsSummary(BaseModel):
     created_at: datetime
     sla_due_at: datetime | None
     sla_state: SlaState | None
+    requires_rca: bool = False
+    rca_status: str | None = None
 
 
 class PqrsPage(BaseModel):
@@ -252,3 +254,84 @@ class PublicStatusOut(BaseModel):
     response_sent_at: datetime | None
     can_reply: bool
     attachments: list[AttachmentOut]
+
+
+# --- Análisis de causa raíz ---
+
+RcaMethod = Literal["five_whys", "ishikawa", "free"]
+CauseCategory = Literal["people", "method", "materials", "machine", "measurement", "environment"]
+
+
+class RcaSetupIn(BaseModel):
+    method: RcaMethod = "five_whys"
+    problem_statement: str = Field(min_length=10, max_length=10000)
+    area_ids: list[uuid.UUID] = Field(min_length=1)
+
+
+class RcaContributionIn(BaseModel):
+    analysis: str = Field(min_length=10, max_length=20000)
+    whys: list[str] = Field(default_factory=list, max_length=7)
+
+
+class RcaConsolidateIn(BaseModel):
+    root_cause: str = Field(min_length=10, max_length=20000)
+    cause_category: CauseCategory
+
+
+class RcaValidateIn(BaseModel):
+    plan_required: bool
+    note: str = Field(min_length=5, max_length=10000)
+
+
+class RcaActionIn(BaseModel):
+    title: str = Field(min_length=3, max_length=250)
+    description: str | None = Field(default=None, max_length=10000)
+    assignee_id: uuid.UUID | None = None
+    due_date: date | None = None
+    priority: Priority = "medium"
+
+
+class RcaCloseIn(BaseModel):
+    summary: str | None = Field(default=None, max_length=10000)
+
+
+class RcaReopenIn(BaseModel):
+    note: str = Field(min_length=5, max_length=5000)
+
+
+class RcaParticipantOut(BaseModel):
+    area: Named
+    analysis: str | None
+    whys: list[str]
+    contributed_by: str | None
+    contributed_at: datetime | None
+    can_contribute: bool
+
+
+class RcaActionOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    status: str
+    due_date: date | None
+    assignee: str | None
+    overdue: bool
+
+
+class RcaOut(BaseModel):
+    status: Literal["setup", "analysis", "validation", "plan", "closed"]
+    method: RcaMethod
+    problem_statement: str | None
+    root_cause: str | None
+    cause_category: CauseCategory | None
+    consolidated_at: datetime | None
+    consolidated_by: str | None
+    plan_required: bool | None
+    validation_note: str | None
+    validated_at: datetime | None
+    validated_by: str | None
+    plan_summary: str | None
+    closed_at: datetime | None
+    closed_by: str | None
+    participants: list[RcaParticipantOut]
+    actions: list[RcaActionOut]
+    can_manage: bool

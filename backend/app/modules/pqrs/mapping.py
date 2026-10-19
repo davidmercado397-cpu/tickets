@@ -75,6 +75,8 @@ def summary(p: Pqrs, n: Names) -> PqrsSummary:
         created_at=p.created_at,
         sla_due_at=p.sla_due_at,
         sla_state=sla_state(p),
+        requires_rca=p.requires_rca,
+        rca_status=p.rca_status,
     )
 
 

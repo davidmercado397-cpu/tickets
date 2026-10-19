@@ -33,6 +33,7 @@ function EditDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
   const [areaId, setAreaId] = useState('');
   const [priority, setPriority] = useState<Priority | ''>('');
   const [active, setActive] = useState(true);
+  const [rcaSegments, setRcaSegments] = useState<Segment[]>([]);
   useEffect(() => {
     if (!editing) return;
     const it = editing.item as (Partial<Category> & Partial<RequestType>) | undefined;
@@ -42,13 +43,14 @@ function EditDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
     setAreaId(it?.default_area_id ?? '');
     setPriority(it?.default_priority ?? '');
     setActive(it?.active ?? true);
+    setRcaSegments((editing.kind === 'type' && editing.item?.rca_segments) || []);
   }, [editing]);
 
   const save = useMutation({
     mutationFn: async () => {
       if (!editing) return;
       if (editing.kind === 'type') {
-        const body = { name, description: description || null };
+        const body = { name, description: description || null, rca_segments: rcaSegments };
         return editing.item ? catalogApi.updateType(editing.item.id, { ...body, active }) : catalogApi.createType(body);
       }
       const rules = { default_area_id: areaId || null, default_priority: priority || null };
@@ -81,6 +83,20 @@ function EditDialog({ editing, onClose }: { editing: Editing | null; onClose: ()
           {editing?.kind !== 'sub' && (
             <Field label="Descripción" hint={editing?.kind === 'type' ? 'Se muestra en el portal para orientar al ciudadano.' : undefined}>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+            </Field>
+          )}
+          {editing?.kind === 'type' && (
+            <Field label="Exige análisis de causa raíz para" hint="Al radicarse, el caso va primero a Calidad y no puede responderse hasta cerrar el análisis.">
+              <div className="flex flex-wrap gap-4">
+                {(['external', 'internal'] as Segment[]).map((s) => (
+                  <Switch
+                    key={s}
+                    checked={rcaSegments.includes(s)}
+                    onChange={(v) => setRcaSegments((cur) => (v ? [...cur, s] : cur.filter((x) => x !== s)))}
+                    label={SEGMENT_LABEL[s]}
+                  />
+                ))}
+              </div>
             </Field>
           )}
           {editing?.kind === 'category' && (
@@ -223,6 +239,7 @@ export function CatalogPage() {
           {(types.data ?? []).map((t) => (
             <button key={t.id} onClick={() => setEditing({ kind: 'type', item: t })} className={cn('rounded-full border px-3 py-1.5 text-sm hover:bg-muted', !t.active && 'opacity-50 line-through')}>
               {t.name}
+              {t.rca_segments.length > 0 && <span className="ml-1.5 text-xs text-warning">· causa raíz</span>}
             </button>
           ))}
         </CardContent>

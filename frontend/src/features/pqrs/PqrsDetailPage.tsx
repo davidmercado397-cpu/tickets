@@ -13,7 +13,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 import { pqrsApi, tasksApi } from '@/shared/api/endpoints';
 import { errorMessage } from '@/shared/api/errors';
@@ -23,13 +23,14 @@ import { TaskFormDialog } from '@/shared/components/TaskFormDialog';
 import { keys, useUserLookup } from '@/shared/hooks/queries';
 import { cn } from '@/shared/lib/cn';
 import { formatDate, formatDateTime, formatRelative } from '@/shared/lib/date';
-import { CHANNEL_LABEL, SEGMENT_LABEL, UNIT_LABEL } from '@/shared/lib/labels';
+import { CHANNEL_LABEL, RCA_STATUS_LABEL, RCA_STATUS_TONE, SEGMENT_LABEL, UNIT_LABEL } from '@/shared/lib/labels';
 import { useCan } from '@/shared/session/session.store';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
 import { Field, NativeSelect, Switch } from '@/shared/ui/field';
 import { FileInput, formatBytes } from '@/shared/ui/file-input';
+import { Pill } from '@/shared/ui/pill';
 import { Progress } from '@/shared/ui/progress';
 import { toast } from '@/shared/ui/sonner';
 import { ErrorState } from '@/shared/ui/states/ErrorState';
@@ -38,6 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Textarea } from '@/shared/ui/textarea';
 
 import { ClassifyDialog } from './ClassifyDialog';
+import { RcaPanel } from './RcaPanel';
 import { ResponsePanel } from './ResponsePanel';
 import { Timeline } from './Timeline';
 
@@ -72,6 +74,7 @@ function usePqrsAction<A>(fn: (a: A) => Promise<PqrsDetail>, ok: string, onData:
 
 export function PqrsDetailPage() {
   const { id = '' } = useParams();
+  const [search] = useSearchParams();
   const qc = useQueryClient();
   const can = useCan();
   const qk = [...keys.pqrs, 'detail', id];
@@ -137,6 +140,9 @@ export function PqrsDetailPage() {
             <PriorityPill priority={p.priority} />
             <SlaPill state={p.sla.state} />
             {p.sla.paused && <span className="text-xs text-warning">⏸ Reloj en pausa</span>}
+            {p.requires_rca && p.rca_status && (
+              <Pill tone={RCA_STATUS_TONE[p.rca_status]}>Causa raíz: {RCA_STATUS_LABEL[p.rca_status]}</Pill>
+            )}
           </div>
           <h1 className="text-xl font-semibold leading-snug sm:text-2xl">{p.subject}</h1>
         </div>
@@ -182,10 +188,21 @@ export function PqrsDetailPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0 space-y-4">
-          <Tabs defaultValue={p.status === 'pending_approval' ? 'respuesta' : 'detalle'}>
+          <Tabs
+            defaultValue={
+              search.get('tab') === 'rca' && p.requires_rca
+                ? 'rca'
+                : p.status === 'pending_approval'
+                  ? 'respuesta'
+                  : p.requires_rca && p.rca_status !== 'closed'
+                    ? 'rca'
+                    : 'detalle'
+            }
+          >
             <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
               <TabsTrigger value="detalle">Detalle</TabsTrigger>
               <TabsTrigger value="seguimiento">Seguimiento ({p.events.length})</TabsTrigger>
+              {p.requires_rca && <TabsTrigger value="rca">Causa raíz</TabsTrigger>}
               <TabsTrigger value="respuesta">Respuesta</TabsTrigger>
             </TabsList>
 
@@ -256,6 +273,12 @@ export function PqrsDetailPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {p.requires_rca && (
+              <TabsContent value="rca">
+                <RcaPanel pqrs={p} />
+              </TabsContent>
+            )}
 
             <TabsContent value="respuesta">
               <ResponsePanel pqrs={p} onChange={update} />

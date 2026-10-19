@@ -29,6 +29,11 @@ class LetterSettings(BaseModel):
     signer_user_id: uuid.UUID | None = None
 
 
+class QualitySettings(BaseModel):
+    # Área que recibe primero las quejas que exigen análisis de causa raíz (por defecto, "Calidad").
+    area_id: uuid.UUID | None = None
+
+
 class NotificationSettings(BaseModel):
     email_requester_on_create: bool = True
     email_staff: bool = True
@@ -76,6 +81,7 @@ class TenantOut(BaseModel):
     portal: PortalSettings = PortalSettings()
     letter: LetterSettings = LetterSettings()
     notifications: NotificationSettings = NotificationSettings()
+    quality: QualitySettings = QualitySettings()
     email_inbound: EmailInboundSettings = EmailInboundSettings()
 
 
@@ -94,6 +100,7 @@ class TenantUpdate(BaseModel):
     portal: PortalSettings | None = None
     letter: LetterSettings | None = None
     notifications: NotificationSettings | None = None
+    quality: QualitySettings | None = None
 
 
 class TenantCreate(BaseModel):

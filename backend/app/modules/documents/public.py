@@ -32,3 +32,10 @@ async def render_response_letter(*, tenant: dict, case: dict, body: str, signer:
         now=datetime.now(timezone.utc),
         draft=draft,
     )
+
+
+async def render_rca_report(*, tenant: dict, case: dict, rca: dict) -> bytes:
+    from app.modules.documents.rca_report import build_rca_report
+
+    return build_rca_report(tenant=tenant, case=case, rca=rca, logo=await _fetch(tenant.get("logo_key")),
+                            now=datetime.now(timezone.utc))

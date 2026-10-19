@@ -64,7 +64,7 @@ async def get_my_tenant(ctx: TenantCtxDep, session: SessionDep) -> TenantOut:
 async def update_my_tenant(body: TenantUpdate, ctx: SettingsCtx, session: SessionDep) -> TenantOut:
     tenant = await service.get_tenant(session, ctx.tid)
     data = body.model_dump(exclude_unset=True)
-    for section in ("portal", "letter", "notifications"):
+    for section in ("portal", "letter", "notifications", "quality"):
         if getattr(body, section) is not None:
             data[section] = getattr(body, section).model_dump(mode="json")
     return service.tenant_out(await service.update_tenant(session, tenant, data))

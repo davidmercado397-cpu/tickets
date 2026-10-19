@@ -127,6 +127,7 @@ export type PqrsFilters = Partial<{
   mine: boolean;
   open_only: boolean;
   sla_state: T.SlaState;
+  rca_pending: boolean;
   from: string;
   to: string;
   page: number;
@@ -160,6 +161,22 @@ export const pqrsApi = {
     http<T.PqrsDetail>(`/pqrs/${id}/responses/${responseId}/return`, { method: 'POST', body: { note } }),
   preview: (id: string, body: string) =>
     openFile(`/pqrs/${id}/responses/preview`, undefined, { method: 'POST', body: { body, action: 'draft' } }),
+};
+
+export const rcaApi = {
+  get: (id: string) => http<T.Rca>(`/pqrs/${id}/rca`),
+  setup: (id: string, body: { method: T.RcaMethod; problem_statement: string; area_ids: string[] }) =>
+    http<T.Rca>(`/pqrs/${id}/rca/setup`, { method: 'PUT', body }),
+  contribute: (id: string, areaId: string, body: { analysis: string; whys: string[] }) =>
+    http<T.Rca>(`/pqrs/${id}/rca/contributions/${areaId}`, { method: 'PUT', body }),
+  consolidate: (id: string, body: { root_cause: string; cause_category: T.CauseCategory }) =>
+    http<T.Rca>(`/pqrs/${id}/rca/consolidate`, { method: 'POST', body }),
+  validate: (id: string, body: { plan_required: boolean; note: string }) =>
+    http<T.Rca>(`/pqrs/${id}/rca/validate`, { method: 'POST', body }),
+  addAction: (id: string, body: Record<string, unknown>) => http<T.Rca>(`/pqrs/${id}/rca/actions`, { method: 'POST', body }),
+  close: (id: string, summary: string) => http<T.Rca>(`/pqrs/${id}/rca/close`, { method: 'POST', body: { summary } }),
+  reopen: (id: string, note: string) => http<T.Rca>(`/pqrs/${id}/rca/reopen`, { method: 'POST', body: { note } }),
+  report: (id: string) => openFile(`/pqrs/${id}/rca/report.pdf`),
 };
 
 export const publicApi = {

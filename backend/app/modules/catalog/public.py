@@ -24,7 +24,7 @@ async def resolve(
     rt = await session.get(RequestType, request_type_id)
     if rt is None or rt.tenant_id != tenant_id or not rt.active:
         raise ValidationError("Tipo de solicitud inválido.")
-    out = {"area_id": None, "priority": None}
+    out = {"area_id": None, "priority": None, "requires_rca": segment in (rt.rca_segments or [])}
     if category_id is None:
         if subcategory_id is not None:
             raise ValidationError("Indica la categoría de la subcategoría.")
@@ -36,7 +36,7 @@ async def resolve(
         raise ValidationError("La categoría no corresponde al tipo de cliente (interno/externo).")
     if cat.request_type_id is not None and cat.request_type_id != request_type_id:
         raise ValidationError("La categoría no corresponde al tipo de solicitud.")
-    out = {"area_id": cat.default_area_id, "priority": cat.default_priority}
+    out = {**out, "area_id": cat.default_area_id, "priority": cat.default_priority}
     if subcategory_id is not None:
         sub = await session.get(Subcategory, subcategory_id)
         if sub is None or sub.category_id != cat.id or not sub.active:

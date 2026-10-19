@@ -58,6 +58,8 @@ export function ResponsePanel({ pqrs, onChange }: { pqrs: PqrsDetail; onChange: 
   const preview = useMutation({ mutationFn: () => pqrsApi.preview(pqrs.id, body), onError: (e) => toast.error(errorMessage(e)) });
   const busy = save.isPending || approve.isPending || giveBack.isPending;
   const canWrite = can(['pqrs.respond', 'pqrs.approve']) && !closed && (!awaiting || can('pqrs.approve'));
+  // Queja con análisis de causa raíz abierto: se puede redactar el borrador, no enviar ni aprobar.
+  const rcaBlocked = pqrs.requires_rca && pqrs.rca_status !== 'closed';
 
   return (
     <div className="space-y-4">
@@ -95,6 +97,15 @@ export function ResponsePanel({ pqrs, onChange }: { pqrs: PqrsDetail; onChange: 
             <CardTitle className="text-base">{awaiting ? 'Respuesta en aprobación' : 'Proyectar respuesta'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {rcaBlocked && (
+              <Alert>
+                <AlertTitle>Pendiente el análisis de causa raíz</AlertTitle>
+                <AlertDescription>
+                  Puedes redactar y guardar el borrador, pero la respuesta solo se envía cuando Calidad cierre el análisis
+                  (y su plan de acción, si aplica). Revisa la pestaña Causa raíz.
+                </AlertDescription>
+              </Alert>
+            )}
             {pending?.status === 'returned' && pending.review_note && (
               <Alert variant="destructive">
                 <AlertTitle>Devuelta para ajustes</AlertTitle>
@@ -125,12 +136,12 @@ export function ResponsePanel({ pqrs, onChange }: { pqrs: PqrsDetail; onChange: 
                       <Save />
                       Guardar borrador
                     </Button>
-                    <Button onClick={() => save.mutate('submit')} disabled={busy || body.length < 10}>
+                    <Button onClick={() => save.mutate('submit')} disabled={busy || rcaBlocked || body.length < 10}>
                       <Send />
                       Enviar a aprobación
                     </Button>
                     {can('pqrs.approve') && (
-                      <Button variant="secondary" onClick={() => save.mutate('send')} disabled={busy || body.length < 10}>
+                      <Button variant="secondary" onClick={() => save.mutate('send')} disabled={busy || rcaBlocked || body.length < 10}>
                         <CheckCircle2 />
                         Aprobar y enviar
                       </Button>
@@ -143,7 +154,7 @@ export function ResponsePanel({ pqrs, onChange }: { pqrs: PqrsDetail; onChange: 
               <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
                 <Textarea rows={2} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Observaciones (obligatorias para devolver)" />
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => approve.mutate()} disabled={busy}>
+                  <Button onClick={() => approve.mutate()} disabled={busy || rcaBlocked}>
                     {approve.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
                     Aprobar y enviar
                   </Button>

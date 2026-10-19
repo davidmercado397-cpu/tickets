@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { authApi, tenantApi } from '@/shared/api/endpoints';
 import { errorMessage } from '@/shared/api/errors';
 import type { Tenant } from '@/shared/api/types';
-import { keys, useUserLookup } from '@/shared/hooks/queries';
+import { keys, useAreas, useUserLookup } from '@/shared/hooks/queries';
 import { applyBrand } from '@/shared/lib/brand';
 import { formatDateTime } from '@/shared/lib/date';
 import { useCan, useSessionStore } from '@/shared/session/session.store';
@@ -134,10 +134,13 @@ function PortalTab({ t }: { t: Tenant }) {
   const [portal, setPortal] = useState(t.portal);
   const [letter, setLetter] = useState(t.letter);
   const [notif, setNotif] = useState(t.notifications);
+  const [qualityArea, setQualityArea] = useState(t.quality.area_id ?? '');
+  const areas = useAreas();
   useEffect(() => {
     setPortal(t.portal);
     setLetter(t.letter);
     setNotif(t.notifications);
+    setQualityArea(t.quality.area_id ?? '');
   }, [t]);
   const url = `${window.location.origin}/portal/${t.slug}`;
   return (
@@ -198,6 +201,26 @@ function PortalTab({ t }: { t: Tenant }) {
       </Card>
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Calidad y análisis de causa raíz</CardTitle>
+          <CardDescription>
+            Las PQRS que exigen análisis de causa raíz (por defecto, las quejas de clientes externos) llegan primero a esta área.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Field label="Área de Calidad">
+            <NativeSelect value={qualityArea} onChange={(e) => setQualityArea(e.target.value)}>
+              <option value="">Área con código &quot;calidad&quot; (por defecto)</option>
+              {(areas.data ?? []).filter((a) => a.active).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Notificaciones por correo</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
@@ -206,7 +229,10 @@ function PortalTab({ t }: { t: Tenant }) {
         </CardContent>
       </Card>
       <div className="flex justify-end">
-        <Button onClick={() => save.mutate({ portal, letter, notifications: notif })} disabled={save.isPending}>
+        <Button
+          onClick={() => save.mutate({ portal, letter, notifications: notif, quality: { area_id: qualityArea || null } })}
+          disabled={save.isPending}
+        >
           {save.isPending ? <Loader2 className="animate-spin" /> : <Save />}
           Guardar
         </Button>

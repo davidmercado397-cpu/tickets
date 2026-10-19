@@ -39,7 +39,16 @@ const PortalHome = named(() => import('@/features/portal/PortalHome'), 'PortalHo
 const PortalRadicar = named(() => import('@/features/portal/PortalRadicar'), 'PortalRadicar');
 const PortalConsulta = named(() => import('@/features/portal/PortalConsulta'), 'PortalConsulta');
 
-const PQRS_VIEW = ['pqrs.view_all', 'pqrs.view_area', 'pqrs.manage', 'pqrs.respond', 'pqrs.approve', 'pqrs.create'];
+const PQRS_VIEW = [
+  'pqrs.view_all',
+  'pqrs.view_area',
+  'pqrs.manage',
+  'pqrs.respond',
+  'pqrs.approve',
+  'pqrs.create',
+  'pqrs.rca_manage',
+  'pqrs.rca_contribute',
+];
 const perm = (perms: string[], children: RouteObject[]): RouteObject => ({ element: <RequirePerm perms={perms} />, children });
 
 export const routes: RouteObject[] = [

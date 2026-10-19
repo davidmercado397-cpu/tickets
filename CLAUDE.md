@@ -14,6 +14,9 @@ Guía para retomar el trabajo. La arquitectura y las reglas están en `docs/ARQU
 - Respuesta formal = carta PDF con membrete y firma en imagen, con aprobación antes del envío.
 - Canales: portal web, ventanilla, correo IMAP y WhatsApp (el repo `meta-waba` aún no está conectado; entra por API key).
 - Visitas a puesto: formularios dinámicos, metas mensuales por cliente o sede, hallazgos que generan tareas.
+- **Queja de cliente externo → análisis de causa raíz obligatorio**: llega primero a Calidad, que elige las áreas
+  que intervienen, consolida la causa raíz, valida si se requiere plan de acción y lo registra (acciones = tareas).
+  La queja no se responde hasta cerrar el análisis. Ver `docs/ARQUITECTURA.md`.
 - Integración futura con el módulo de **minutas** (vía `/api/integrations/*` o como módulo nuevo).
 - La infraestructura local es la misma que la de la nube (un solo compose; solo cambia el `.env`).
 - Marca: colores y logo de Servigpoder, configurables por empresa.

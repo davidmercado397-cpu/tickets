@@ -77,6 +77,22 @@ Cada módulo vive en `backend/app/modules/<nombre>/` y tiene, como máximo:
 - **Respuesta formal**: el gestor proyecta la respuesta → el aprobador (permiso `pqrs.approve`) la aprueba o la devuelve →
   se genera la carta en PDF con membrete y firma en imagen → se envía por correo y queda disponible en el portal.
 
+## Análisis de causa raíz (quejas de clientes externos)
+
+- Cada **tipo de solicitud** define en qué segmentos exige análisis de causa raíz (`rca_segments`). Por defecto
+  se siembra **Queja → cliente externo**. Si se reclasifica un caso a ese tipo, el análisis se activa.
+- El caso llega primero al **área de Calidad**: la configurada en la empresa (`settings.quality.area_id`) o, si no
+  hay, la de código `calidad`. Se notifica a quien tiene `pqrs.rca_manage`.
+- Etapas (`pqrs/rca.py`):
+  1. `setup`: Calidad redacta el problema, elige el método (5 porqués, Ishikawa o libre) y marca las áreas que intervienen.
+  2. `analysis`: cada área aporta. Puede hacerlo quien tiene `pqrs.rca_contribute` y es miembro del área; los
+     miembros de las áreas participantes ven el caso.
+  3. `validation`: Calidad consolida la causa raíz (categoría 6M) y decide si requiere plan de acción.
+  4. `plan`: cada acción es una **tarea** (`source_type="action_plan"`, `source_id`=PQRS), con seguimiento y evidencias.
+  5. `closed`: el análisis queda documentado y se descarga como informe PDF (`/pqrs/{id}/rca/report.pdf`).
+- **Bloqueo:** la respuesta formal no se envía ni se aprueba hasta que el análisis esté `closed` (sí se puede guardar
+  el borrador). Calidad puede reabrir el análisis mientras el caso no esté cerrado.
+
 ## SLA (no bloqueante)
 
 - Política por **prioridad** (urgente, alta, media, baja) configurable por empresa: valor y unidad

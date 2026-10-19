@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from app.core.db import session_factory
 from app.core.events import Event, subscribe
 from app.core.jobs import enqueue
@@ -194,6 +196,47 @@ async def on_sla_alert(event: Event) -> None:
                          "El caso superó su fecha límite de respuesta." if overdue
                          else "El caso está próximo a vencer su tiempo de respuesta."),
                          ("Ver caso", emails.staff_link(_pqrs_link(p)))))
+
+
+@subscribe("pqrs.rca_required")
+async def on_rca_required(event: Event) -> None:
+    session, p, tenant = await _ctx(event)
+    async with session:
+        users = await identity.recipients(session, event.tenant_id, "pqrs.rca_manage")
+        title = f"Queja con análisis de causa raíz: {p['radicado']}"
+        await notify(session, event.tenant_id, users, kind="pqrs_rca", title=title, body=p["subject"],
+                     link=_pqrs_link(p), email=_staff_email_on(tenant),
+                     email_html=emails.layout(tenant, title, emails.p(
+                         "Llegó una queja que exige análisis de causa raíz. Define las áreas que intervienen."),
+                         ("Ver caso", emails.staff_link(_pqrs_link(p)))))
+
+
+@subscribe("pqrs.rca_participants")
+async def on_rca_participants(event: Event) -> None:
+    session, p, tenant = await _ctx(event)
+    async with session:
+        users: list[dict] = []
+        for area_id in event.payload.get("area_ids", []):
+            users += await identity.recipients(session, event.tenant_id, "pqrs.rca_contribute", uuid.UUID(area_id))
+        title = f"Tu área participa en el análisis de causa raíz {p['radicado']}"
+        await notify(session, event.tenant_id, users, kind="pqrs_rca", title=title, body=p["subject"],
+                     link=_pqrs_link(p) + "?tab=rca", email=_staff_email_on(tenant),
+                     email_html=emails.layout(tenant, title, emails.p(
+                         "Calidad solicita el análisis de tu área para esta queja."),
+                         ("Registrar análisis", emails.staff_link(_pqrs_link(p) + "?tab=rca"))))
+
+
+@subscribe("pqrs.rca_contributed")
+async def on_rca_contributed(event: Event) -> None:
+    session, p, tenant = await _ctx(event)
+    async with session:
+        users = await identity.recipients(session, event.tenant_id, "pqrs.rca_manage")
+        pending = event.payload.get("pending", 0)
+        await notify(session, event.tenant_id, users, kind="pqrs_rca",
+                     title=f"{event.payload.get('area_name')} aportó al análisis {p['radicado']}",
+                     body="Todas las áreas aportaron: ya puedes consolidar la causa raíz." if pending == 0
+                     else f"Faltan {pending} área(s) por aportar.",
+                     link=_pqrs_link(p) + "?tab=rca")
 
 
 @subscribe("task.assigned")

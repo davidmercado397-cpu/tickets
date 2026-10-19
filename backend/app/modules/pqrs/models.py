@@ -60,6 +60,10 @@ class Pqrs(IdMixin, TenantMixin, TimestampMixin, Base):
     resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     sla_alerted: Mapped[str | None] = mapped_column(String(20), nullable=True)  # última alerta enviada
 
+    # Análisis de causa raíz obligatorio (p. ej. queja de cliente externo). Bloquea la respuesta hasta cerrarlo.
+    requires_rca: Mapped[bool] = mapped_column(Boolean, default=False)
+    rca_status: Mapped[str | None] = mapped_column(String(15), nullable=True, index=True)
+
     events: Mapped[list[PqrsEvent]] = relationship(
         cascade="all, delete-orphan", order_by="PqrsEvent.at", lazy="raise"
     )
@@ -119,3 +123,56 @@ class PqrsResponse(IdMixin, TenantMixin, TimestampMixin, Base):
     pdf_key: Mapped[str | None] = mapped_column(String(300), nullable=True)
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     sent_to: Mapped[str | None] = mapped_column(String(250), nullable=True)
+
+
+RCA_STATUSES = ("setup", "analysis", "validation", "plan", "closed")
+RCA_METHODS = ("five_whys", "ishikawa", "free")
+# Categorías 6M (espina de pescado) para clasificar la causa raíz.
+CAUSE_CATEGORIES = ("people", "method", "materials", "machine", "measurement", "environment")
+
+
+class RootCauseAnalysis(IdMixin, TenantMixin, TimestampMixin, Base):
+    """Análisis de causa raíz de una PQRS (lo lidera Calidad).
+
+    setup (Calidad elige áreas) → analysis (cada área aporta) → validation (causa raíz consolidada;
+    Calidad decide si hay plan) → plan (acciones = tareas) → closed."""
+
+    __tablename__ = "pqrs_rca"
+
+    pqrs_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("pqrs.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(15), default="setup")
+    method: Mapped[str] = mapped_column(String(15), default="five_whys")
+    problem_statement: Mapped[str | None] = mapped_column(Text, nullable=True)
+    root_cause: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cause_category: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    consolidated_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    consolidated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    plan_required: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    validation_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    validated_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    validated_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    plan_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    closed_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    participants: Mapped[list[RcaParticipant]] = relationship(
+        cascade="all, delete-orphan", order_by="RcaParticipant.created_at", lazy="selectin"
+    )
+
+
+class RcaParticipant(IdMixin, Base):
+    """Área que interviene en el análisis y su aporte."""
+
+    __tablename__ = "pqrs_rca_participants"
+    __table_args__ = (UniqueConstraint("rca_id", "area_id", name="uq_pqrs_rca_participants_area"),)
+
+    rca_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("pqrs_rca.id", ondelete="CASCADE"), index=True)
+    area_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("areas.id"), index=True)
+    analysis: Mapped[str | None] = mapped_column(Text, nullable=True)
+    whys: Mapped[list] = mapped_column(JSONType(), default=list)
+    contributed_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    contributed_by_label: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    contributed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

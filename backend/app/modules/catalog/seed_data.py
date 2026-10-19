@@ -1,12 +1,13 @@
 """Catálogo inicial típico de una empresa de seguridad privada (la empresa lo edita libremente)."""
 
+# (código, nombre, descripción, segmentos que exigen análisis de causa raíz)
 REQUEST_TYPES = [
-    ("peticion", "Petición", "Solicitud de información, documentos o de una actuación."),
-    ("queja", "Queja", "Inconformidad con la conducta o atención de una persona."),
-    ("reclamo", "Reclamo", "Inconformidad con la prestación del servicio."),
-    ("sugerencia", "Sugerencia", "Propuesta para mejorar el servicio."),
-    ("felicitacion", "Felicitación", "Reconocimiento al servicio o a una persona."),
-    ("denuncia", "Denuncia", "Puesta en conocimiento de una conducta irregular."),
+    ("peticion", "Petición", "Solicitud de información, documentos o de una actuación.", []),
+    ("queja", "Queja", "Inconformidad con la conducta o atención de una persona.", ["external"]),
+    ("reclamo", "Reclamo", "Inconformidad con la prestación del servicio.", []),
+    ("sugerencia", "Sugerencia", "Propuesta para mejorar el servicio.", []),
+    ("felicitacion", "Felicitación", "Reconocimiento al servicio o a una persona.", []),
+    ("denuncia", "Denuncia", "Puesta en conocimiento de una conducta irregular.", []),
 ]
 
 # (segmento, código, nombre, área por defecto, prioridad por defecto, tipo (None = todos), subcategorías)

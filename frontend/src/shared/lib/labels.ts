@@ -1,4 +1,15 @@
-import type { Channel, PqrsStatus, Priority, Segment, SlaState, SlaUnit, TaskStatus } from '@/shared/api/types';
+import type {
+  CauseCategory,
+  Channel,
+  PqrsStatus,
+  Priority,
+  RcaMethod,
+  RcaStatus,
+  Segment,
+  SlaState,
+  SlaUnit,
+  TaskStatus,
+} from '@/shared/api/types';
 
 /** Etiquetas en español de los códigos del backend (los códigos viajan en inglés). */
 
@@ -99,6 +110,45 @@ export const EVENT_LABEL: Record<string, string> = {
   response_submitted: 'Respuesta enviada a aprobación',
   response_returned: 'Respuesta devuelta para ajustes',
   response_sent: 'Respuesta enviada',
+  rca_required: 'Requiere análisis de causa raíz',
+  rca_setup: 'Causa raíz: áreas convocadas',
+  rca_contribution: 'Causa raíz: aporte de un área',
+  rca_root_cause: 'Causa raíz consolidada',
+  rca_validated: 'Causa raíz validada por Calidad',
+  rca_action: 'Plan de acción: acción agregada',
+  rca_closed: 'Análisis de causa raíz cerrado',
+  rca_reopened: 'Análisis de causa raíz reabierto',
+};
+
+export const RCA_STATUS_LABEL: Record<RcaStatus, string> = {
+  setup: 'Por definir áreas',
+  analysis: 'En análisis por áreas',
+  validation: 'En validación de Calidad',
+  plan: 'Plan de acción',
+  closed: 'Cerrado',
+};
+
+export const RCA_STATUS_TONE: Record<RcaStatus, string> = {
+  setup: 'bg-warning/15 text-warning border-warning/30',
+  analysis: 'bg-info/15 text-info border-info/30',
+  validation: 'bg-purple-500/15 text-purple-700 border-purple-500/30 dark:text-purple-300',
+  plan: 'bg-primary/15 text-primary border-primary/30',
+  closed: 'bg-success/15 text-success border-success/30',
+};
+
+export const RCA_METHOD_LABEL: Record<RcaMethod, string> = {
+  five_whys: '5 porqués',
+  ishikawa: 'Espina de pescado (Ishikawa)',
+  free: 'Análisis libre',
+};
+
+export const CAUSE_CATEGORY_LABEL: Record<CauseCategory, string> = {
+  people: 'Mano de obra (personas)',
+  method: 'Método (procedimientos)',
+  materials: 'Materiales y dotación',
+  machine: 'Maquinaria y equipos',
+  measurement: 'Medición y control',
+  environment: 'Medio ambiente / entorno',
 };
 
 export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];

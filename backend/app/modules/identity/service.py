@@ -75,6 +75,7 @@ async def update_me(session: AsyncSession, user: User, data: dict) -> User:
 # --- Siembra de una empresa nueva ---
 
 DEFAULT_AREAS = [
+    ("calidad", "Calidad"),
     ("operaciones", "Operaciones"),
     ("gestion_humana", "Gestión Humana"),
     ("facturacion", "Facturación y Cartera"),

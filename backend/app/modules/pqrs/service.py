@@ -20,7 +20,16 @@ from app.modules.catalog import public as catalog
 from app.modules.clients import public as clients
 from app.modules.employees import public as employees
 from app.modules.identity import public as identity
-from app.modules.pqrs.models import FINAL_STATUSES, Pqrs, PqrsAttachment, PqrsEvent, PqrsResponse
+from app.modules.pqrs import rca as rca_flow
+from app.modules.pqrs.models import (
+    FINAL_STATUSES,
+    Pqrs,
+    PqrsAttachment,
+    PqrsEvent,
+    PqrsResponse,
+    RcaParticipant,
+    RootCauseAnalysis,
+)
 from app.modules.sla import public as sla
 from app.modules.tenancy import public as tenancy
 
@@ -166,6 +175,12 @@ def scope_condition(ctx: Ctx):
         conds += [Pqrs.assignee_id == ctx.user_id, Pqrs.created_by_id == ctx.user_id]
     if ctx.can("pqrs.view_area") and ctx.area_ids:
         conds.append(Pqrs.area_id.in_(ctx.area_ids))
+    if ctx.can("pqrs.rca_contribute") and ctx.area_ids:
+        conds.append(Pqrs.id.in_(
+            select(RootCauseAnalysis.pqrs_id)
+            .join(RcaParticipant, RcaParticipant.rca_id == RootCauseAnalysis.id)
+            .where(RcaParticipant.area_id.in_(ctx.area_ids))
+        ))
     return or_(*conds) if conds else Pqrs.id.is_(None)
 
 
@@ -201,6 +216,7 @@ class ListFilters:
     mine: bool = False
     open_only: bool = False
     sla_state: str | None = None
+    rca_pending: bool = False
     date_from: datetime | None = None
     date_to: datetime | None = None
 
@@ -227,6 +243,9 @@ def _apply_filters(stmt: Select, ctx: Ctx, f: ListFilters) -> Select:
         stmt = stmt.where(Pqrs.assignee_id == ctx.user_id)
     if f.open_only:
         stmt = stmt.where(Pqrs.status.not_in(FINAL_STATUSES))
+    if f.rca_pending:
+        stmt = stmt.where(Pqrs.requires_rca.is_(True), Pqrs.rca_status != "closed",
+                          Pqrs.status.not_in(FINAL_STATUSES))
     if f.date_from:
         stmt = stmt.where(Pqrs.created_at >= f.date_from)
     if f.date_to:
@@ -341,6 +360,8 @@ async def create_pqrs(
                        note=f"Radicada por canal {channel}.", actor_label=actor_label))
     await _store_files(session, p, files, "requester" if ctx is None else "staff", ctx.user_id if ctx else None,
                        public=True)
+    if suggested.get("requires_rca"):
+        await rca_flow.start(session, p, ctx)
     emit(session, "pqrs.created", tenant_id, pqrs_id=p.id)
     if data.get("assignee_id"):
         await _assign(session, ctx, p, data["assignee_id"], None)
@@ -382,6 +403,14 @@ async def classify(session: AsyncSession, ctx: Ctx, pqrs_id: uuid.UUID, data: di
         if await employees.employee_brief(session, ctx.tid, data["employee_id"]) is None:
             raise ValidationError("Empleado inválido.")
         p.employee_id, changes["employee_id"] = data["employee_id"], str(data["employee_id"])
+    if suggested.get("requires_rca") and not p.requires_rca:
+        before = p.area_id
+        await rca_flow.start(session, p, ctx)
+        if p.area_id != before:
+            changes["area_id"] = str(p.area_id)
+    elif p.requires_rca and not suggested.get("requires_rca"):
+        p.requires_rca, p.rca_status = False, None
+        changes["requires_rca"] = False
     if changes:
         session.add(_event(p, ctx, "classified", note=data.get("note"), data=changes))
         if "area_id" in changes:
@@ -482,6 +511,8 @@ async def save_response(session: AsyncSession, ctx: Ctx, pqrs_id: uuid.UUID, bod
         raise ValidationError("El caso ya está cerrado.")
     if action == "send" and not ctx.can("pqrs.approve"):
         raise ForbiddenError("Enviar sin aprobación requiere el permiso de aprobar respuestas.")
+    if action != "draft":
+        rca_flow.ensure_can_respond(p)
     resp = _current_response(p)
     if resp is None:
         resp = PqrsResponse(tenant_id=ctx.tid, pqrs_id=p.id, body=body, author_id=ctx.user_id)
@@ -563,6 +594,7 @@ async def approve_response(session: AsyncSession, ctx: Ctx, pqrs_id: uuid.UUID, 
     resp = next((r for r in p.responses if r.id == response_id), None)
     if resp is None or resp.status != "pending_approval":
         raise ValidationError("No hay una respuesta pendiente de aprobación.")
+    rca_flow.ensure_can_respond(p)
     await _approve(session, ctx, p, resp, note, body)
     await commit_and_dispatch(session)
     return await get_pqrs(session, ctx, pqrs_id)
