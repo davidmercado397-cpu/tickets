@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { employeesApi, pqrsApi } from '@/shared/api/endpoints';
@@ -68,9 +68,9 @@ export function PqrsCreatePage() {
   );
   const category = categories.find((c) => c.id === catId);
   const sites = clients.data?.find((c) => c.id === clientId)?.sites.filter((s) => s.active) ?? [];
-  useEffect(() => {
-    if (!typeId && types.data?.[0]) setTypeId(types.data[0].id);
-  }, [typeId, types.data]);
+  // Sin tipo preseleccionado: elegirlo es una decisión explícita (la queja externa exige causa raíz).
+  const selectedType = types.data?.find((t) => t.id === typeId);
+  const requiresRca = !!selectedType?.rca_segments.includes(segment);
 
   const save = useMutation({
     mutationFn: () =>
@@ -154,8 +154,17 @@ export function PqrsCreatePage() {
               ))}
             </div>
           </Field>
-          <Field label="Tipo de solicitud" required>
-            <NativeSelect value={typeId} onChange={(e) => { setTypeId(e.target.value); setCatId(''); }}>
+          <Field
+            label="Tipo de solicitud"
+            required
+            hint={requiresRca ? 'Exige análisis de causa raíz: el caso se enviará primero a Calidad.' : undefined}
+          >
+            <NativeSelect
+              value={typeId}
+              onChange={(e) => { setTypeId(e.target.value); setCatId(''); }}
+              className={cn(!typeId && 'text-muted-foreground', requiresRca && 'border-warning')}
+            >
+              <option value="">Selecciona el tipo…</option>
               {(types.data ?? []).filter((t) => t.active).map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}

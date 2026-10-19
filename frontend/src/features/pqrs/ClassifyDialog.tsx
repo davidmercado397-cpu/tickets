@@ -87,7 +87,14 @@ export function ClassifyDialog({
           <DialogTitle>Clasificar PQRS</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tipo de solicitud">
+          <Field
+            label="Tipo de solicitud"
+            hint={
+              !pqrs.requires_rca && types.data?.find((t) => t.id === typeId)?.rca_segments.includes(pqrs.segment)
+                ? 'Este tipo exige análisis de causa raíz: al guardar, el caso pasa a Calidad.'
+                : undefined
+            }
+          >
             <NativeSelect value={typeId} onChange={(e) => { setTypeId(e.target.value); setCatId(''); setSubId(''); }}>
               {(types.data ?? []).filter((t) => t.active).map((t) => (
                 <option key={t.id} value={t.id}>
