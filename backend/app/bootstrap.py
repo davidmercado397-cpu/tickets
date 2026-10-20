@@ -31,14 +31,14 @@ async def seed(settings: Settings) -> None:
                 )
                 logger.info("Superadministrador sembrado")
         if settings.SEED_DEMO_TENANT and settings.SEED_DEMO_ADMIN_PASSWORD:
-            if not (await session.execute(select(Tenant.id).where(Tenant.slug == "servigpoder"))).first():
+            if not (await session.execute(select(Tenant.id).where(Tenant.slug == "demo"))).first():
                 try:
                     await create_tenant(session, {
-                        "name": "Servigpoder", "slug": "servigpoder", "legal_name": "Servigpoder Ltda",
-                        "radicado_prefix": "SGP", "city": "Santiago de Cali",
-                        "admin_email": settings.SEED_DEMO_ADMIN_EMAIL, "admin_full_name": "Administrador Servigpoder",
+                        "name": "Empresa Demo", "slug": "demo", "legal_name": "Empresa Demo S.A.S.",
+                        "radicado_prefix": "DEMO", "city": "Santiago de Cali",
+                        "admin_email": settings.SEED_DEMO_ADMIN_EMAIL, "admin_full_name": "Administrador Demo",
                         "admin_password": settings.SEED_DEMO_ADMIN_PASSWORD,
                     })
-                    logger.info("Empresa de demostración sembrada (servigpoder)")
+                    logger.info("Empresa de demostración sembrada (demo)")
                 except ConflictError as exc:
                     logger.warning("No se sembró la empresa demo: %s", exc)

@@ -64,7 +64,7 @@ export function PortalHome() {
             }}
           >
             <Field label="Radicado">
-              <Input value={radicado} onChange={(e) => setRadicado(e.target.value.toUpperCase())} placeholder="SGP-2026-000123" required />
+              <Input value={radicado} onChange={(e) => setRadicado(e.target.value.toUpperCase())} placeholder="ABC-2026-000123" required />
             </Field>
             <Field label="Código de consulta">
               <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABCD2345" required />

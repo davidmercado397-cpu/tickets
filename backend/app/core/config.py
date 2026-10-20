@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Firma de los JWT de sesión (HS256, >= 32 bytes).
     AUTH_JWT_SIGNING_KEY: str = ""
 
-    APP_NAME: str = "PQRS Seguridad"
+    APP_NAME: str = "NextByte Seguimientos"
     API_PREFIX: str = "/api"
     # URL pública del frontend: se usa en correos (enlace al portal de consulta).
     PUBLIC_BASE_URL: str = "http://localhost:8080"
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     SEED_SUPERADMIN_PASSWORD: str = ""
     # Empresa de demostración (se siembra con su admin si se configuran). Útil en local.
     SEED_DEMO_TENANT: bool = False
-    SEED_DEMO_ADMIN_EMAIL: str = "admin@servigpoder.co"
+    SEED_DEMO_ADMIN_EMAIL: str = "admin@demo.nextbyte.com.co"
     SEED_DEMO_ADMIN_PASSWORD: str = ""
 
     REDIS_URL: str = "redis://redis:6379/0"

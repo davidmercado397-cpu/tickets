@@ -1,4 +1,4 @@
-# CLAUDE.md — Plataforma PQRS (empresas de seguridad)
+# CLAUDE.md — NextByte Seguimientos (PQRS para empresas de seguridad)
 
 Guía para retomar el trabajo. La arquitectura y las reglas están en `docs/ARQUITECTURA.md`: léela antes de tocar código.
 
@@ -19,7 +19,8 @@ Guía para retomar el trabajo. La arquitectura y las reglas están en `docs/ARQU
   La queja no se responde hasta cerrar el análisis. Ver `docs/ARQUITECTURA.md`.
 - Integración futura con el módulo de **minutas** (vía `/api/integrations/*` o como módulo nuevo).
 - La infraestructura local es la misma que la de la nube (un solo compose; solo cambia el `.env`).
-- Marca: colores y logo de Servigpoder, configurables por empresa.
+- Producto: **NextByte Seguimientos**. Cada empresa configura su propia marca (logo y colores).
+  No usar el nombre de ningún cliente en código, siembra, pruebas ni documentación (empresa demo = `demo`).
 
 ## Convenciones
 
@@ -41,6 +42,6 @@ cd frontend && corepack pnpm lint && corepack pnpm exec tsc -b && corepack pnpm 
 ## Pendiente
 
 - Conectar el bot de WhatsApp (`meta-waba`) a `/api/integrations/pqrs`.
-- Logo y colores oficiales de Servigpoder (hoy, azul #0B3D91 y dorado #F2A900 provisionales).
+- Logo y colores de NextByte para la pantalla de ingreso (hoy, azul #0B3D91 y dorado #F2A900 por defecto).
 - Certificado laboral PDF del sistema anterior (no se migró).
 - Módulo de minutas.

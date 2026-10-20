@@ -114,10 +114,10 @@ def test_missing_columns_and_non_excel(client, admin):
 def test_quotas_require_visits_permission(client, admin):
     roles = {r["code"]: r["id"] for r in client.get("/api/roles", headers=admin).json()}
     r = client.post("/api/roles", headers=admin, json={"name": "Comercial", "permissions": ["clients.manage"]})
-    client.post("/api/users", headers=admin, json={"email": "com@servigpoder.co", "full_name": "Comercial",
+    client.post("/api/users", headers=admin, json={"email": "com@demo.nextbyte.com.co", "full_name": "Comercial",
                                                    "password": "comercial-123", "role_ids": [r.json()["id"]]})
     assert "admin" in roles
-    h = login(client, "com@servigpoder.co", "comercial-123")
+    h = login(client, "com@demo.nextbyte.com.co", "comercial-123")
     body = _upload(client, h, GOOD, dry_run=True).json()
     assert body["errors"] and "metas de visitas" in body["errors"][0]["message"]
     no_quota = _xlsx([["900123456-7", "Sin meta", None, None, None, None, None]], [])

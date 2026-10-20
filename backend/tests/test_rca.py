@@ -40,11 +40,11 @@ def test_external_complaint_goes_to_quality_and_blocks_response_until_rca_closed
     # Un gestor de Operaciones aporta por su área.
     ops, gh = _area(client, admin, "operaciones"), _area(client, admin, "gestion_humana")
     r = client.post("/api/users", headers=admin, json={
-        "email": "ops@servigpoder.co", "full_name": "Jefe Operaciones", "password": "operaciones-1",
+        "email": "ops@demo.nextbyte.com.co", "full_name": "Jefe Operaciones", "password": "operaciones-1",
         "role_ids": [_role(client, admin, "gestor")["id"]], "area_ids": [ops["id"]],
     })
     assert r.status_code == 201, r.text
-    gestor = login(client, "ops@servigpoder.co", "operaciones-1")
+    gestor = login(client, "ops@demo.nextbyte.com.co", "operaciones-1")
     assert client.put(f"/api/pqrs/{pid}/rca/setup", headers=gestor,
                       json={"problem_statement": "x" * 12, "area_ids": [ops["id"]]}).status_code == 403
 

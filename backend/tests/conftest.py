@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 SUPER = ("super@plataforma.co", "super-secreto-123")
-ADMIN = ("admin@servigpoder.co", "admin-secreto-123")
+ADMIN = ("admin@demo.nextbyte.com.co", "admin-secreto-123")
 
 
 @pytest.fixture
@@ -79,4 +79,4 @@ def make_client_site(client: TestClient, headers: dict, nit: str = "900.123.456-
 
 
 def public_create(client: TestClient, payload: dict, files=None):
-    return client.post("/api/public/tenants/servigpoder/pqrs", data={"data": json.dumps(payload)}, files=files)
+    return client.post("/api/public/tenants/demo/pqrs", data={"data": json.dumps(payload)}, files=files)

@@ -1,8 +1,8 @@
-# Arquitectura — Plataforma PQRS para empresas de seguridad
+# Arquitectura — NextByte Seguimientos
 
 ## Visión
 
-SaaS **multiempresa** para empresas de vigilancia y seguridad privada (piloto: Servigpoder). Gestiona
+SaaS **multiempresa** de NextByte para empresas de vigilancia y seguridad privada. Gestiona
 PQRS (peticiones, quejas, reclamos, sugerencias, felicitaciones y denuncias) de **clientes externos**
 (clientes corporativos y sus sedes/puestos de servicio) y **clientes internos** (empleados), además de
 **visitas de supervisión a puesto** con formularios dinámicos, **tareas** de seguimiento e **indicadores**.

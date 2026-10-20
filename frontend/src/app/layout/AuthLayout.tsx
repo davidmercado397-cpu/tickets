@@ -17,7 +17,7 @@ export function AuthLayout() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-accent text-white shadow-sm">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <span className="text-lg font-semibold">Plataforma PQRS · Seguridad</span>
+          <span className="text-lg font-semibold">NextByte Seguimientos</span>
         </div>
         <div className="relative max-w-md space-y-6">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight">
@@ -32,7 +32,7 @@ export function AuthLayout() {
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-sidebar-muted">© {new Date().getFullYear()} Servigpoder</p>
+        <p className="relative text-xs text-sidebar-muted">© {new Date().getFullYear()} NextByte</p>
       </div>
       <div className="flex items-center justify-center bg-muted/30 p-4 sm:p-6">
         <Outlet />

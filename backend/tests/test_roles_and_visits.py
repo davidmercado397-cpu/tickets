@@ -14,11 +14,11 @@ def test_dynamic_role_and_area_scope(client, admin):
     assert r.status_code == 201, r.text
     assert client.post("/api/roles", headers=admin, json={"name": "Malo", "permissions": ["no.existe"]}).status_code == 422
     r = client.post("/api/users", headers=admin, json={
-        "email": "sst@servigpoder.co", "full_name": "Coord SST", "password": "coord-secreto-1",
+        "email": "sst@demo.nextbyte.com.co", "full_name": "Coord SST", "password": "coord-secreto-1",
         "role_ids": [r.json()["id"]], "area_ids": [areas["sst"]],
     })
     assert r.status_code == 201, r.text
-    h = login(client, "sst@servigpoder.co", "coord-secreto-1")
+    h = login(client, "sst@demo.nextbyte.com.co", "coord-secreto-1")
 
     rt, cat, sub = catalog_ids(client, admin)  # categoría externa → área operaciones
     public_create(client, {"segment": "external", "request_type_id": rt, "category_id": cat, "subject": "Operativo",
@@ -35,11 +35,11 @@ def test_dynamic_role_and_area_scope(client, admin):
 def test_visit_with_findings_creates_tasks_and_compliance(client, admin):
     c, site = make_client_site(client, admin)
     jefe_role = _role(client, admin, "jefe_operacion")
-    r = client.post("/api/users", headers=admin, json={"email": "jefe@servigpoder.co", "full_name": "Jefe Operación",
+    r = client.post("/api/users", headers=admin, json={"email": "jefe@demo.nextbyte.com.co", "full_name": "Jefe Operación",
                                                        "password": "jefe-secreto-12", "role_ids": [jefe_role["id"]]})
     assert r.status_code == 201
     jefe_id = r.json()["id"]
-    jefe = login(client, "jefe@servigpoder.co", "jefe-secreto-12")
+    jefe = login(client, "jefe@demo.nextbyte.com.co", "jefe-secreto-12")
 
     r = client.put("/api/visits/quotas", headers=admin, json={"site_id": site["id"], "visits_per_month": 2})
     assert r.status_code == 200, r.text

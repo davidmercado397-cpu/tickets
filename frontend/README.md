@@ -1,6 +1,6 @@
 # Mesa de Ayuda — Frontend (`tickets_front`)
 
-SPA React de la plataforma de mesa de ayuda con bot de WhatsApp con IA (primer cliente: Servigpoder).
+SPA React de **NextByte Seguimientos** (PQRS, visitas a puesto, tareas e indicadores para empresas de seguridad).
 Habla **solo** con el backend del Ticketing (`app_tickets`, FastAPI en `:8001`). El navegador nunca
 toca el WhatsApp Gateway directo.
 

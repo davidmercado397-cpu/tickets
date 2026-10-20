@@ -49,7 +49,7 @@ export function Sidebar({ collapsed, onNavigate }: { collapsed: boolean; onNavig
         <BrandMark slug={tenant?.slug} hasLogo={tenant?.has_logo} />
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold leading-tight">{tenant?.name ?? 'Plataforma PQRS'}</p>
+            <p className="truncate text-[15px] font-semibold leading-tight">{tenant?.name ?? 'NextByte Seguimientos'}</p>
             <p className="truncate text-[11px] text-sidebar-muted">Gestión de PQRS y operación</p>
           </div>
         )}

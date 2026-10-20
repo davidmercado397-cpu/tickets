@@ -75,7 +75,7 @@ function GeneralTab({ t }: { t: Tenant }) {
               <Input value={(f[k] as string) ?? ''} onChange={(e) => set(k, e.target.value)} />
             </Field>
           ))}
-          <Field label="Prefijo del radicado" hint="Ej. SGP → SGP-2026-000123">
+          <Field label="Prefijo del radicado" hint="Ej. ABC → ABC-2026-000123">
             <Input value={f.radicado_prefix} onChange={(e) => set('radicado_prefix', e.target.value.toUpperCase())} maxLength={10} />
           </Field>
           <div className="flex items-end justify-end sm:col-span-2">

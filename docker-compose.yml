@@ -1,4 +1,4 @@
-# Plataforma PQRS — la MISMA definición en local y en la nube; solo cambia el archivo .env.
+# NextByte Seguimientos — la MISMA definición en local y en la nube; solo cambia el archivo .env.
 #   Local:  cp .env.example .env  (y genera los secretos)  →  docker compose up -d --build
 #   Nube:   mismo compose con su propio .env (COMPOSE_PROFILES vacío para no levantar Mailpit,
 #           SMTP real y, si se quiere, S3/R2 externo en S3_ENDPOINT_URL).

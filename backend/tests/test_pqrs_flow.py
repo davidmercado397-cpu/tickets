@@ -19,14 +19,14 @@ def test_platform_creates_tenant_with_seeded_config(client, superadmin):
     assert {"admin", "radicador", "gestor", "aprobador", "jefe_operacion", "auditor"} <= roles
     policies = client.get("/api/sla/policies", headers=h).json()
     assert {p["priority"]: (p["target_value"], p["unit"]) for p in policies}["medium"] == (15, "business_days")
-    # Aislamiento: la empresa nueva no ve catálogos/clientes de Servigpoder.
+    # Aislamiento: la empresa nueva no ve catálogos/clientes de la empresa demo.
     assert client.get("/api/clients", headers=h).json() == []
 
 
 def test_public_portal_full_lifecycle(client, admin):
     rt, cat, sub = catalog_ids(client, admin)
     c, site = make_client_site(client, admin)
-    lookup = client.get("/api/public/tenants/servigpoder/clients/lookup?nit=900123456-7")
+    lookup = client.get("/api/public/tenants/demo/clients/lookup?nit=900123456-7")
     assert lookup.status_code == 200 and lookup.json()["sites"][0]["id"] == site["id"]
 
     r = public_create(client, {
@@ -37,7 +37,7 @@ def test_public_portal_full_lifecycle(client, admin):
     }, files=[("files", ("evidencia.txt", b"hola", "text/plain"))])
     assert r.status_code == 201, r.text
     radicado, code = r.json()["radicado"], r.json()["public_code"]
-    assert radicado.startswith("SGP-")
+    assert radicado.startswith("DEMO-")
 
     page = client.get("/api/pqrs?open_only=true", headers=admin).json()
     case = next(i for i in page["items"] if i["radicado"] == radicado)
@@ -52,7 +52,7 @@ def test_public_portal_full_lifecycle(client, admin):
     r = client.post(f"/api/pqrs/{pid}/status", headers=admin, json={"status": "on_hold", "note": "Envíe la minuta"})
     assert r.status_code == 200 and r.json()["sla"]["paused"] is True
     # El solicitante responde desde el portal → se reanuda.
-    r = client.post(f"/api/public/tenants/servigpoder/pqrs/{radicado}/messages",
+    r = client.post(f"/api/public/tenants/demo/pqrs/{radicado}/messages",
                     data={"code": code, "message": "Adjunto la minuta del día."})
     assert r.status_code == 200, r.text
     detail = client.get(f"/api/pqrs/{pid}", headers=admin).json()
@@ -70,10 +70,10 @@ def test_public_portal_full_lifecycle(client, admin):
     file = client.get(f"/api/pqrs/{pid}/attachments/{pdf['id']}", headers=admin)
     assert file.content.startswith(b"%PDF")
 
-    status = client.get(f"/api/public/tenants/servigpoder/pqrs/{radicado}?code={code}").json()
+    status = client.get(f"/api/public/tenants/demo/pqrs/{radicado}?code={code}").json()
     assert status["status"] == "responded" and status["response_available"] is True
     assert all(e["kind"] != "comment" for e in status["events"])  # notas internas no salen al portal
-    assert client.get(f"/api/public/tenants/servigpoder/pqrs/{radicado}?code=MALO123").status_code == 404
+    assert client.get(f"/api/public/tenants/demo/pqrs/{radicado}?code=MALO123").status_code == 404
 
     # Notificaciones in-app y correos encolados (acuse + respuesta).
     jobs = client.portal.call(client.fake_redis.lrange, "jobs:default", 0, -1)
