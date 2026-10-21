@@ -15,7 +15,14 @@ from app.modules.identity.deps import (  # noqa: F401 - re-exportados
     require,
 )
 from app.modules.identity.models import Area, User
-from app.modules.identity.service import create_area, create_user, seed_roles  # noqa: F401
+from app.modules.identity.service import (  # noqa: F401
+    create_area,
+    create_user,
+    is_tenant_admin,
+    list_tenant_users,
+    platform_update_user,
+    seed_roles,
+)
 
 
 async def user_brief(session: AsyncSession, user_id: uuid.UUID | None) -> dict | None:

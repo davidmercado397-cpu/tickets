@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Loader2, Plus } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { platformApi } from '@/shared/api/endpoints';
 import { errorMessage } from '@/shared/api/errors';
+import type { Tenant } from '@/shared/api/types';
 import { formatDate } from '@/shared/lib/date';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -15,6 +16,9 @@ import { Pill } from '@/shared/ui/pill';
 import { toast } from '@/shared/ui/sonner';
 import { LoadingState } from '@/shared/ui/states/LoadingState';
 
+import { finalSlug, typingSlug } from './portalSlug';
+import { TenantEditDialog } from './TenantEditDialog';
+
 const EMPTY = { name: '', slug: '', nit: '', radicado_prefix: 'PQRS', city: '', admin_email: '', admin_full_name: '', admin_password: '' };
 
 export function TenantsPage() {
@@ -22,8 +26,10 @@ export function TenantsPage() {
   const q = useQuery({ queryKey: ['platform-tenants'], queryFn: platformApi.tenants });
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(EMPTY);
+  const [editing, setEditing] = useState<Tenant | null>(null);
+  const slugPreview = finalSlug(f.slug || f.name);
   const create = useMutation({
-    mutationFn: () => platformApi.createTenant({ ...f, slug: f.slug || null, nit: f.nit || null, city: f.city || null }),
+    mutationFn: () => platformApi.createTenant({ ...f, slug: finalSlug(f.slug) || null, nit: f.nit || null, city: f.city || null }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['platform-tenants'] });
       toast.success('Empresa creada con su configuración inicial');
@@ -66,6 +72,10 @@ export function TenantsPage() {
                 {t.nit ? `NIT ${t.nit} · ` : ''}Prefijo {t.radicado_prefix} · desde {formatDate(t.created_at)}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={() => setEditing(t)}>
+                  <Pencil />
+                  Editar
+                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <a href={`/portal/${t.slug}`} target="_blank" rel="noreferrer">
                     <ExternalLink />
@@ -92,14 +102,21 @@ export function TenantsPage() {
             <Field label="Nombre" required>
               <Input value={f.name} onChange={(e) => set('name', e.target.value)} />
             </Field>
-            <Field label="Identificador del portal" hint="Ej. seguridad-andina (vacío = automático)">
-              <Input value={f.slug} onChange={(e) => set('slug', e.target.value.toLowerCase())} />
+            <Field
+              label="Identificador del portal"
+              hint={slugPreview ? `Enlace: /portal/${slugPreview}` : 'Vacío = se genera a partir del nombre.'}
+            >
+              <Input value={f.slug} placeholder="seguridad-andina" onChange={(e) => set('slug', typingSlug(e.target.value))} />
             </Field>
             <Field label="NIT">
               <Input value={f.nit} onChange={(e) => set('nit', e.target.value)} />
             </Field>
             <Field label="Prefijo de radicado">
-              <Input value={f.radicado_prefix} onChange={(e) => set('radicado_prefix', e.target.value.toUpperCase())} maxLength={10} />
+              <Input
+                value={f.radicado_prefix}
+                onChange={(e) => set('radicado_prefix', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                maxLength={10}
+              />
             </Field>
             <Field label="Ciudad">
               <Input value={f.city} onChange={(e) => set('city', e.target.value)} />
@@ -127,6 +144,7 @@ export function TenantsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <TenantEditDialog tenant={editing} onOpenChange={(v) => !v && setEditing(null)} />
     </div>
   );
 }

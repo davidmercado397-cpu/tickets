@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.core.text import slugify
 
 HEX = r"^#[0-9A-Fa-f]{6}$"
 
@@ -113,9 +116,70 @@ class TenantCreate(BaseModel):
     admin_full_name: str = Field(min_length=2, max_length=200)
     admin_password: str = Field(min_length=8, max_length=200)
 
+    @field_validator("slug", mode="before")
+    @classmethod
+    def _normalize_slug(cls, v: object) -> object:
+        """'Seguridad Atlas' → 'seguridad-atlas': el identificador va en la URL del portal."""
+        if isinstance(v, str):
+            v = v.strip()
+            return slugify(v, 60, "-") if v else None
+        return v
+
+    @field_validator("radicado_prefix", mode="before")
+    @classmethod
+    def _normalize_prefix(cls, v: object) -> object:
+        if isinstance(v, str):
+            return re.sub(r"[^A-Za-z0-9]", "", v).upper()[:10]
+        return v
+
 
 class PlatformTenantUpdate(BaseModel):
-    name: str | None = None
+    """Datos que el superadministrador puede corregir. El slug no se edita: rompería los enlaces del portal."""
+
+    name: str | None = Field(default=None, min_length=2, max_length=200)
+    legal_name: str | None = None
+    nit: str | None = None
+    radicado_prefix: str | None = Field(default=None, pattern=r"^[A-Z0-9]{0,10}$")
+    city: str | None = None
+    address: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
+    website: str | None = None
+    active: bool | None = None
+
+    @field_validator("radicado_prefix", mode="before")
+    @classmethod
+    def _normalize_prefix(cls, v: object) -> object:
+        if isinstance(v, str):
+            return re.sub(r"[^A-Za-z0-9]", "", v).upper()[:10]
+        return v
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _empty_email(cls, v: object) -> object:
+        return None if isinstance(v, str) and not v.strip() else v
+
+
+class PlatformUserOut(BaseModel):
+    id: uuid.UUID
+    email: str
+    full_name: str
+    active: bool
+    is_admin: bool
+    roles: list[str]
+    last_login_at: datetime | None
+
+
+class PlatformUserCreate(BaseModel):
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=200)
+    password: str = Field(min_length=8, max_length=200)
+
+
+class PlatformUserUpdate(BaseModel):
+    email: EmailStr | None = None
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+    password: str | None = Field(default=None, min_length=8, max_length=200)
     active: bool | None = None
 
 

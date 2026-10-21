@@ -59,6 +59,11 @@ export const platformApi = {
   createTenant: (body: Record<string, unknown>) => http<T.Tenant>('/platform/tenants', { method: 'POST', body }),
   updateTenant: (id: string, body: Record<string, unknown>) =>
     http<T.Tenant>(`/platform/tenants/${id}`, { method: 'PATCH', body }),
+  users: (tenantId: string) => http<T.PlatformUser[]>(`/platform/tenants/${tenantId}/users`),
+  createAdmin: (tenantId: string, body: { email: string; full_name: string; password: string }) =>
+    http<T.PlatformUser>(`/platform/tenants/${tenantId}/users`, { method: 'POST', body }),
+  updateUser: (tenantId: string, userId: string, body: Record<string, unknown>) =>
+    http<T.PlatformUser>(`/platform/tenants/${tenantId}/users/${userId}`, { method: 'PATCH', body }),
 };
 
 export const catalogApi = {

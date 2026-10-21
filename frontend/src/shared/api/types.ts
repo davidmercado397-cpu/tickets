@@ -169,6 +169,16 @@ export interface Tenant {
   email_inbound: EmailInboundSettings;
 }
 
+export interface PlatformUser {
+  id: UUID;
+  email: string;
+  full_name: string;
+  active: boolean;
+  is_admin: boolean;
+  roles: string[];
+  last_login_at: string | null;
+}
+
 export interface PublicTenant {
   slug: string;
   name: string;

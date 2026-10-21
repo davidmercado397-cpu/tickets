@@ -23,6 +23,16 @@ def test_platform_creates_tenant_with_seeded_config(client, superadmin):
     assert client.get("/api/clients", headers=h).json() == []
 
 
+def test_tenant_slug_and_prefix_are_normalized(client, superadmin):
+    r = client.post("/api/platform/tenants", headers=superadmin, json={
+        "name": "Seguridad Atlas", "slug": "  Seguridad Atlas Ñandú ", "radicado_prefix": "s-a 1",
+        "admin_email": "admin@atlas.co", "admin_full_name": "Admin Atlas", "admin_password": "atlas-secreto-1",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["slug"] == "seguridad-atlas-nandu" and r.json()["radicado_prefix"] == "SA1"
+    assert client.get("/api/public/tenants/seguridad-atlas-nandu").status_code == 200
+
+
 def test_public_portal_full_lifecycle(client, admin):
     rt, cat, sub = catalog_ids(client, admin)
     c, site = make_client_site(client, admin)

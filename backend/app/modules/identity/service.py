@@ -285,6 +285,35 @@ async def get_user(session: AsyncSession, ctx: Ctx, user_id: uuid.UUID) -> User:
     return user
 
 
+async def list_tenant_users(session: AsyncSession, tenant_id: uuid.UUID) -> list[User]:
+    """Usuarios de una empresa (vista del superadministrador)."""
+    stmt = select(User).where(User.tenant_id == tenant_id).order_by(User.full_name)
+    return list((await session.execute(stmt)).scalars())
+
+
+async def platform_update_user(session: AsyncSession, tenant_id: uuid.UUID, user_id: uuid.UUID, data: dict) -> User:
+    """El superadministrador corrige datos de acceso de un usuario de una empresa (correo, nombre, clave, estado)."""
+    user = await session.get(User, user_id)
+    if user is None or user.tenant_id != tenant_id:
+        raise NotFoundError("Usuario no encontrado en esta empresa.")
+    email = (data.get("email") or "").strip().lower()
+    if email and email != user.email:
+        if (await session.execute(select(User.id).where(User.email == email))).first():
+            raise ConflictError("Ya existe un usuario con ese correo.")
+        user.email = email
+    if data.get("password"):
+        user.password_hash = hash_password(data["password"])
+    for key in ("full_name", "phone", "position", "active"):
+        if data.get(key) is not None:
+            setattr(user, key, data[key])
+    await session.commit()
+    return user
+
+
+def is_tenant_admin(user: User) -> bool:
+    return any(r.all_permissions for r in user.roles)
+
+
 async def update_user(session: AsyncSession, ctx: Ctx, user_id: uuid.UUID, data: dict) -> User:
     user = await get_user(session, ctx, user_id)
     if data.get("password"):

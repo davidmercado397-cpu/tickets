@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from app.core.context import Ctx
 from app.core.errors import NotFoundError, ValidationError
 from app.core.storage import new_key, storage
+from app.modules.identity import public as identity
 from app.modules.identity.public import SessionDep, SuperadminDep, TenantCtxDep, require
 from app.modules.tenancy import service
 from app.modules.tenancy.schemas import (
@@ -16,6 +17,9 @@ from app.modules.tenancy.schemas import (
     IntegrationKeyCreated,
     IntegrationKeyOut,
     PlatformTenantUpdate,
+    PlatformUserCreate,
+    PlatformUserOut,
+    PlatformUserUpdate,
     PortalSettings,
     PublicTenantOut,
     TenantCreate,
@@ -51,6 +55,39 @@ async def update_platform_tenant(
 ) -> TenantOut:
     tenant = await service.get_tenant(session, tenant_id)
     return service.tenant_out(await service.update_tenant(session, tenant, body.model_dump(exclude_unset=True)))
+
+
+def _platform_user(u) -> PlatformUserOut:
+    return PlatformUserOut(
+        id=u.id, email=u.email, full_name=u.full_name, active=u.active, is_admin=identity.is_tenant_admin(u),
+        roles=[r.name for r in u.roles], last_login_at=u.last_login_at,
+    )
+
+
+@platform_router.get("/tenants/{tenant_id}/users", response_model=list[PlatformUserOut])
+async def list_tenant_users(tenant_id: uuid.UUID, _: SuperadminDep, session: SessionDep) -> list[PlatformUserOut]:
+    await service.get_tenant(session, tenant_id)
+    users = await identity.list_tenant_users(session, tenant_id)
+    # Administradores primero.
+    return sorted((_platform_user(u) for u in users), key=lambda u: (not u.is_admin, u.full_name.lower()))
+
+
+@platform_router.post("/tenants/{tenant_id}/users", response_model=PlatformUserOut, status_code=status.HTTP_201_CREATED)
+async def create_tenant_admin(
+    tenant_id: uuid.UUID, body: PlatformUserCreate, _: SuperadminDep, session: SessionDep
+) -> PlatformUserOut:
+    """Agrega un administrador a la empresa (rol Administrador)."""
+    await service.get_tenant(session, tenant_id)
+    user = await identity.create_user(session, tenant_id, body.model_dump(), role_codes=["admin"])
+    return _platform_user(user)
+
+
+@platform_router.patch("/tenants/{tenant_id}/users/{user_id}", response_model=PlatformUserOut)
+async def update_tenant_user(
+    tenant_id: uuid.UUID, user_id: uuid.UUID, body: PlatformUserUpdate, _: SuperadminDep, session: SessionDep
+) -> PlatformUserOut:
+    user = await identity.platform_update_user(session, tenant_id, user_id, body.model_dump(exclude_unset=True))
+    return _platform_user(user)
 
 
 # --- Empresa propia ---
