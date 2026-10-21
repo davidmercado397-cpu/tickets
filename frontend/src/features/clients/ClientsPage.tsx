@@ -36,7 +36,7 @@ export function ClientDialog({ open, onOpenChange, client, onSaved }: { open: bo
     mutationFn: () => {
       const body = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, v === '' ? null : v]));
       delete body.active;
-      return client ? clientsApi.update(client.id, { ...body, nit: undefined }) : clientsApi.create(body);
+      return client ? clientsApi.update(client.id, body) : clientsApi.create(body);
     },
     onSuccess: (c) => {
       void qc.invalidateQueries({ queryKey: ['clients'] });
@@ -55,7 +55,7 @@ export function ClientDialog({ open, onOpenChange, client, onSaved }: { open: bo
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="NIT" required>
-            <Input value={f.nit ?? ''} onChange={(e) => set('nit', e.target.value)} disabled={!!client} />
+            <Input value={f.nit ?? ''} onChange={(e) => set('nit', e.target.value)} />
           </Field>
           <Field label="Razón social / nombre" required>
             <Input value={f.name ?? ''} onChange={(e) => set('name', e.target.value)} />

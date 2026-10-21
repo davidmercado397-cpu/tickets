@@ -122,3 +122,14 @@ def test_quotas_require_visits_permission(client, admin):
     assert body["errors"] and "metas de visitas" in body["errors"][0]["message"]
     no_quota = _xlsx([["900123456-7", "Sin meta", None, None, None, None, None]], [])
     assert _upload(client, h, no_quota, dry_run=False).json()["saved"] is True
+
+
+def test_client_nit_can_be_corrected(client, admin):
+    """Clientes cargados con NIT provisional: el NIT se corrige después, sin duplicar otro."""
+    a = client.post("/api/clients", headers=admin, json={"nit": "0000000001", "name": "Provisional A"}).json()
+    client.post("/api/clients", headers=admin, json={"nit": "0000000002", "name": "Provisional B"})
+    r = client.patch(f"/api/clients/{a['id']}", headers=admin, json={"nit": "890.300.123-4", "name": "Provisional A"})
+    assert r.status_code == 200, r.text
+    assert r.json()["nit"] == "890300123-4"
+    r = client.patch(f"/api/clients/{a['id']}", headers=admin, json={"nit": "0000000002"})
+    assert r.status_code == 409

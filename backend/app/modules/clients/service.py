@@ -49,6 +49,15 @@ async def create_client(session: AsyncSession, ctx: Ctx, data: dict) -> Client:
 
 async def update_client(session: AsyncSession, ctx: Ctx, client_id: uuid.UUID, data: dict) -> Client:
     client = await get_client(session, ctx.tid, client_id)
+    if data.get("nit"):
+        data["nit"] = normalize_nit(data["nit"])
+        taken = await session.execute(
+            select(Client.id).where(Client.tenant_id == ctx.tid, Client.nit == data["nit"], Client.id != client.id)
+        )
+        if taken.first():
+            raise ConflictError("Ya existe un cliente con ese NIT.")
+    else:
+        data.pop("nit", None)
     for key, value in data.items():
         setattr(client, key, value)
     await session.commit()

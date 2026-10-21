@@ -76,6 +76,7 @@ class ClientIn(BaseModel):
 
 
 class ClientUpdate(BaseModel):
+    nit: str | None = Field(default=None, min_length=3, max_length=30)
     name: str | None = Field(default=None, min_length=2, max_length=200)
     contact_name: str | None = None
     contact_email: EmailStr | None = None
