@@ -71,3 +71,6 @@ Se usa el mismo `docker-compose.yml` con un `.env` de producción:
 - opcionalmente `S3_ENDPOINT_URL` apuntando a R2/S3.
 
 Un proxy con TLS (Coolify, Traefik, Caddy) se pone delante del servicio `web` (puerto 80 del contenedor).
+`docker-compose.yml` no publica puertos en el servidor (evita choques con otros servicios). En local,
+`docker-compose.override.yml` (que `docker compose` carga solo) publica 8080, 8000 y 8025. En Coolify:
+Build Pack "Docker Compose", archivo `/docker-compose.yml` y dominio asignado solo al servicio `web`, puerto 80.

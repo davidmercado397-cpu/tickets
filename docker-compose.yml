@@ -72,10 +72,10 @@ services:
       retries: 30
     restart: unless-stopped
 
+  # Sin puertos publicados: en la nube el proxy (Coolify/Traefik) entra por la red interna al servicio
+  # `web` (puerto 80). En local, docker-compose.override.yml publica 8080 (web), 8000 (api) y 8025 (Mailpit).
   api:
     <<: *backend
-    ports:
-      - "${API_PORT:-8000}:8000"
 
   worker:
     <<: *backend
@@ -92,8 +92,8 @@ services:
     image: pqrs-web:latest
     environment:
       API_BACKEND: http://api:8000
-    ports:
-      - "${WEB_PORT:-8080}:80"
+    expose:
+      - "80"
     depends_on:
       - api
     restart: unless-stopped
@@ -102,8 +102,6 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     profiles: ["local"]
-    ports:
-      - "${MAILPIT_PORT:-8025}:8025"
     restart: unless-stopped
 
 volumes:

@@ -1,0 +1,15 @@
+# Solo para desarrollo local: `docker compose` carga este archivo automáticamente y publica los puertos
+# en el equipo. En la nube (Coolify) se usa únicamente docker-compose.yml, sin puertos publicados, para no
+# chocar con otros servicios del servidor: el proxy llega al servicio `web` por la red interna.
+services:
+  api:
+    ports:
+      - "${API_PORT:-8000}:8000"
+
+  web:
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+  mailpit:
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
